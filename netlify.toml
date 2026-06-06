@@ -1,0 +1,15 @@
+[build]
+  command = "pnpm build"
+  publish = ".output/public"
+
+[functions]
+  directory = ".output/server"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=21600, s-maxage=21600"
+
+# Daily sync — call via Netlify Scheduled Functions
+[[plugins]]
+  package = "@netlify/plugin-scheduled-functions"
