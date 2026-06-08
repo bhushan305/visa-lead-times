@@ -20,5 +20,16 @@ export default defineConfig({
   },
   nitro: {
     preset: target,
+    // Force-include tslib in the serverless bundle. Without this, Nitro
+    // externalizes tslib (as a transitive dep of @supabase/auth-js) but
+    // Vercel's lambda trace doesn't pick it up, and the function crashes at
+    // runtime with ERR_MODULE_NOT_FOUND. Adding it to noExternal tells Nitro
+    // to bundle it directly into the function code.
+    noExternal: ["tslib"],
+    // Belt-and-suspenders: also tell nodeFileTrace to keep tslib's node_modules
+    // entry, in case Nitro decides to externalize anyway.
+    externals: {
+      traceInclude: ["tslib"],
+    },
   },
 });
