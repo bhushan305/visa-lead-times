@@ -16,6 +16,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FormCodeRouteImport } from './routes/form.$code'
 import { Route as CaseSlugRouteImport } from './routes/case.$slug'
+import { Route as ApiTrackRouteImport } from './routes/api/track'
 import { Route as ApiCronSyncRouteImport } from './routes/api/cron/sync'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -53,6 +54,11 @@ const CaseSlugRoute = CaseSlugRouteImport.update({
   path: '/case/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrackRoute = ApiTrackRouteImport.update({
+  id: '/api/track',
+  path: '/api/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronSyncRoute = ApiCronSyncRouteImport.update({
   id: '/api/cron/sync',
   path: '/api/cron/sync',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/forms': typeof FormsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/forms': typeof FormsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/forms': typeof FormsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/track'
     | '/case/$slug'
     | '/form/$code'
     | '/api/cron/sync'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/track'
     | '/case/$slug'
     | '/form/$code'
     | '/api/cron/sync'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/track'
     | '/case/$slug'
     | '/form/$code'
     | '/api/cron/sync'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   FormsRoute: typeof FormsRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiTrackRoute: typeof ApiTrackRoute
   CaseSlugRoute: typeof CaseSlugRoute
   FormCodeRoute: typeof FormCodeRoute
   ApiCronSyncRoute: typeof ApiCronSyncRoute
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CaseSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/track': {
+      id: '/api/track'
+      path: '/api/track'
+      fullPath: '/api/track'
+      preLoaderRoute: typeof ApiTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/sync': {
       id: '/api/cron/sync'
       path: '/api/cron/sync'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   FormsRoute: FormsRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiTrackRoute: ApiTrackRoute,
   CaseSlugRoute: CaseSlugRoute,
   FormCodeRoute: FormCodeRoute,
   ApiCronSyncRoute: ApiCronSyncRoute,

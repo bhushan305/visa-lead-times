@@ -52,9 +52,9 @@ export type CaseDetail = {
 
 /* ---------- Tiered series for the trend chart ----------
  * Tier 1 (right-most): last 30 days, one point per day
- * Tier 2: monthly averages from daily snapshots older than 30d but in the current year
+ * Tier 2: weekly averages from daily snapshots older than 30d
  * Tier 3: YTD national average from historic-pt for the current fiscal year
- *         (only if we don't already have any daily/monthly coverage for it)
+ *         (only if we don't already have any daily/weekly coverage for it)
  * Tier 4 (left-most): prior fiscal-year averages from historic-pt
  */
 export type SeriesPoint = {
@@ -62,17 +62,44 @@ export type SeriesPoint = {
   midpoint: number;
   lo: number;
   hi: number;
-  type: "daily" | "monthly" | "ytd" | "yearly";
+  type: "daily" | "weekly" | "ytd" | "yearly";
   date: string; // sort key
 };
+
+/** ISO-week bucket key (Mon-anchored). "2026-W18" sorts lexicographically. */
+function isoWeekKey(d: string): { key: string; weekStart: string } {
+  const dt = new Date(d + "T00:00:00Z");
+  // Move to Monday of this week
+  const day = dt.getUTCDay(); // 0=Sun
+  const mondayOffset = (day + 6) % 7;
+  dt.setUTCDate(dt.getUTCDate() - mondayOffset);
+  const monday = dt.toISOString().slice(0, 10);
+  // ISO week number
+  const jan1 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  const daysSinceJan1 = Math.floor((dt.getTime() - jan1.getTime()) / 86400000);
+  const week = Math.floor(daysSinceJan1 / 7) + 1;
+  const key = `${dt.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+  return { key, weekStart: monday };
+}
 
 export function buildSeries(detail: CaseDetail): SeriesPoint[] {
   const points: SeriesPoint[] = [];
 
-  /* ---------- Tier 4: prior fiscal years ---------- */
+  /* ---------- Tier 4: prior fiscal years ----------
+   * Dedupe by fiscal_year — if the repo accidentally returns more than one
+   * classification, the chart line would zigzag between them. Keep the
+   * first row per year (repo already sorts by year ASC + chose the best
+   * classification, so first-write-wins is the right policy).
+   */
+  const seenYears = new Set<number>();
   const closedYears = detail.historic
     .filter((h) => !h.is_ytd && typeof h.avg_months === "number")
-    .sort((a, b) => a.fiscal_year - b.fiscal_year);
+    .sort((a, b) => a.fiscal_year - b.fiscal_year)
+    .filter((h) => {
+      if (seenYears.has(h.fiscal_year)) return false;
+      seenYears.add(h.fiscal_year);
+      return true;
+    });
   for (const y of closedYears) {
     points.push({
       label: `FY${String(y.fiscal_year).slice(-2)}`,
@@ -86,7 +113,7 @@ export function buildSeries(detail: CaseDetail): SeriesPoint[] {
 
   /* ---------- Tier 3: current-FY YTD ---------- */
   const ytd = detail.historic.find((h) => h.is_ytd);
-  const haveCurrentYearDaily = detail.daily.length > 0 || detail.monthly.length > 0;
+  const haveCurrentYearDaily = detail.daily.length > 0;
   if (ytd && !haveCurrentYearDaily) {
     points.push({
       label: `FY${String(ytd.fiscal_year).slice(-2)} YTD`,
@@ -98,38 +125,46 @@ export function buildSeries(detail: CaseDetail): SeriesPoint[] {
     });
   }
 
-  /* ---------- Tier 1 + 2: daily (last 30d) + monthly (older) ---------- */
+  /* ---------- Tier 1 + 2: daily (last 30d) + weekly (older) ----------
+   * Cutoff is "today minus 30", not "latest-snapshot minus 30". The latter
+   * gives a misleading "last 30 days" label if the most recent snapshot is
+   * stale (e.g. a missing day shifts the window). Anchor to wall-clock.
+   */
   const sortedDaily = [...detail.daily].sort((a, b) => a.d.localeCompare(b.d));
   if (sortedDaily.length) {
-    const last = sortedDaily[sortedDaily.length - 1].d;
-    const cutoff = new Date(last + "T00:00:00Z");
+    const today = new Date();
+    const cutoff = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+    );
     cutoff.setUTCDate(cutoff.getUTCDate() - 30);
     const cutoffIso = cutoff.toISOString().slice(0, 10);
 
     const older = sortedDaily.filter((p) => p.d <= cutoffIso);
     const recent = sortedDaily.filter((p) => p.d > cutoffIso);
 
-    // Tier 2: bucket older snapshots into months IF we don't already have
-    // monthly_aggregates rows from Supabase covering them.
-    if (!detail.monthly.length && older.length) {
-      const byMonth = new Map<string, { lo: number[]; hi: number[] }>();
+    // Tier 2: bucket older daily snapshots into ISO weeks.
+    if (older.length) {
+      const byWeek = new Map<string, { lo: number[]; hi: number[]; start: string }>();
       for (const p of older) {
-        const key = p.d.slice(0, 7);
-        if (!byMonth.has(key)) byMonth.set(key, { lo: [], hi: [] });
-        byMonth.get(key)!.lo.push(p.lo);
-        byMonth.get(key)!.hi.push(p.hi);
+        const { key, weekStart } = isoWeekKey(p.d);
+        if (!byWeek.has(key)) byWeek.set(key, { lo: [], hi: [], start: weekStart });
+        byWeek.get(key)!.lo.push(p.lo);
+        byWeek.get(key)!.hi.push(p.hi);
       }
-      for (const m of [...byMonth.keys()].sort()) {
-        const b = byMonth.get(m)!;
+      for (const k of [...byWeek.keys()].sort()) {
+        const b = byWeek.get(k)!;
         const lo = avg(b.lo);
         const hi = avg(b.hi);
         points.push({
-          label: new Date(m + "-15").toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+          label: new Date(b.start + "T00:00:00Z").toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
           midpoint: (lo + hi) / 2,
           lo,
           hi,
-          type: "monthly",
-          date: m,
+          type: "weekly",
+          date: b.start,
         });
       }
     }
@@ -148,18 +183,6 @@ export function buildSeries(detail: CaseDetail): SeriesPoint[] {
         date: p.d,
       });
     }
-  }
-
-  // Tier 2 from server-side monthly aggregates (preferred path).
-  for (const m of detail.monthly) {
-    points.push({
-      label: new Date(m.month + "-15").toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
-      midpoint: (m.avg_lo + m.avg_hi) / 2,
-      lo: m.avg_lo,
-      hi: m.avg_hi,
-      type: "monthly",
-      date: m.month,
-    });
   }
 
   // Final sort by date so all four tiers chain left-to-right.

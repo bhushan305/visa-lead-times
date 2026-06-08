@@ -1,0 +1,1 @@
+import{u as n,j as e}from"./index-CsF8TgIW.js";const a=({error:s,reset:t})=>{const r=n();return e.jsxs("div",{className:"p-10 text-sm",children:[e.jsx("p",{className:"text-destructive",children:s.message}),e.jsx("button",{onClick:()=>{r.invalidate(),t()},className:"mt-3 underline",children:"Try again"})]})};export{a as errorComponent};

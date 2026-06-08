@@ -6,6 +6,7 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  ReferenceArea,
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
@@ -31,14 +32,10 @@ export function ProcessingTimeChart({ series }: { series: SeriesPoint[] }) {
 
   const findFirstOfType = (t: SeriesPoint["type"]) =>
     series.find((p) => p.type === t)?.label ?? null;
+  const findLastLabel = () => series[series.length - 1]?.label ?? null;
 
-  const haveHistoric = series.some((p) => p.type === "yearly" || p.type === "ytd");
   const dailyStart = findFirstOfType("daily");
-  // Only label the historic→recent boundary when historic data actually exists,
-  // otherwise the label collapses on top of the "last 30 days →" tag.
-  const historicEnd = haveHistoric
-    ? findFirstOfType("monthly") ?? findFirstOfType("daily")
-    : null;
+  const dailyEnd = findLastLabel();
 
   return (
     <div className="border rule bg-card p-4 sm:p-6">
@@ -75,29 +72,24 @@ export function ProcessingTimeChart({ series }: { series: SeriesPoint[] }) {
             />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--color-rule)" }} />
 
-            {historicEnd && historicEnd !== dailyStart && (
-              <ReferenceLine
-                x={historicEnd}
+            {/* Shaded "last 30 days" zone with a single clear top-center label.
+                Shading makes the boundary obvious without relying on overlapping
+                ReferenceLine labels. */}
+            {dailyStart && dailyEnd && (
+              <ReferenceArea
+                x1={dailyStart}
+                x2={dailyEnd}
+                fill="var(--color-primary)"
+                fillOpacity={0.04}
                 stroke="var(--color-rule)"
+                strokeOpacity={0.3}
                 strokeDasharray="3 3"
                 label={{
-                  value: "← historic",
-                  position: "insideTopLeft",
+                  value: "Last 30 days",
+                  position: "insideTop",
                   fontSize: 10,
                   fill: "var(--color-muted-foreground)",
-                }}
-              />
-            )}
-            {dailyStart && (
-              <ReferenceLine
-                x={dailyStart}
-                stroke="var(--color-rule)"
-                strokeDasharray="3 3"
-                label={{
-                  value: "last 30 days →",
-                  position: "insideTopRight",
-                  fontSize: 10,
-                  fill: "var(--color-muted-foreground)",
+                  offset: 6,
                 }}
               />
             )}
@@ -132,7 +124,7 @@ export function ProcessingTimeChart({ series }: { series: SeriesPoint[] }) {
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
         <strong className="text-foreground">FY bars</strong> are USCIS-published yearly national averages.{" "}
-        <strong className="text-foreground">Monthly</strong> points average our daily snapshots.{" "}
+        <strong className="text-foreground">Weekly</strong> points average our daily snapshots.{" "}
         <strong className="text-foreground">Daily</strong> points are individual USCIS snapshots from the last 30 days.
       </p>
     </div>
@@ -156,7 +148,7 @@ function TypedDot(props: any) {
         fill="var(--color-accent)"
       />
     );
-  if (t === "monthly")
+  if (t === "weekly")
     return (
       <rect x={cx - 2.5} y={cy - 2.5} width={5} height={5} fill="var(--color-primary)" opacity={0.65} />
     );
@@ -173,7 +165,7 @@ function Legend() {
         <span className="inline-block w-2.5 h-2.5 bg-accent rotate-45" /> YTD
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="inline-block w-2.5 h-2.5 bg-primary/65" /> Monthly
+        <span className="inline-block w-2.5 h-2.5 bg-primary/65" /> Weekly
       </span>
       <span className="flex items-center gap-1.5">
         <span className="inline-block w-3 h-0.5 bg-primary" /> Daily
@@ -188,8 +180,8 @@ function ChartTooltip({ active, payload }: any) {
   const tier =
     p.type === "daily"
       ? "Daily snapshot"
-      : p.type === "monthly"
-        ? "Monthly average"
+      : p.type === "weekly"
+        ? "Weekly average"
         : p.type === "ytd"
           ? "Fiscal year (YTD)"
           : "Fiscal year average";

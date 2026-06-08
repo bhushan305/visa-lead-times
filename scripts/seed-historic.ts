@@ -9,21 +9,36 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import path from "node:path";
 
-const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-  auth: { persistSession: false },
-});
+const url =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  process.env.VITE_SUPABASE_URL;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
+if (!url || !key) {
+  console.error("Need SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (sb_secret_…) in .env.local");
+  process.exit(1);
+}
+const sb = createClient(url, key, { auth: { persistSession: false } });
 
 const seed = JSON.parse(
   fs.readFileSync(path.join(process.cwd(), "data", "historic-pt-seed.json"), "utf8")
-).filter((row: any) => row.form_code); // skip the _note rows
+).filter((row: any) => row && row.form_code && row.years); // skip the _note rows
 
-const rows = seed.map((r: any) => ({
-  form_code: r.form_code,
-  classification: r.classification,
-  fiscal_year: r.fiscal_year,
-  is_ytd: !!r.is_ytd,
-  avg_months: r.avg_months,
-}));
+// Compact JSON shape: each entry has a `years` map → expand to one row per FY.
+const rows: any[] = [];
+for (const r of seed) {
+  for (const [yStr, v] of Object.entries(r.years)) {
+    const fy = Number(yStr);
+    if (!Number.isFinite(fy) || v == null) continue;
+    rows.push({
+      form_code: r.form_code,
+      classification: r.classification,
+      fiscal_year: fy,
+      is_ytd: r.ytd_year === fy,
+      avg_months: Number(v),
+    });
+  }
+}
 
 (async () => {
   const { error } = await sb

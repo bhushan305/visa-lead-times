@@ -31,15 +31,32 @@ export const Route = createFileRoute("/case/$slug")({
   head: ({ loaderData, params }) => {
     const s = loaderData?.detail?.summary;
     if (!s) return { meta: [{ title: "Case not found" }] };
-    const title = `${s.form_code} ${s.category} at ${s.office} — Processing Time | Visa Lead Times`;
-    const desc = `Current USCIS processing time for ${s.form_code} (${s.category}) at ${s.office}: ${s.current_display ?? "see chart"}. Updated daily.`;
+
+    // Lead with the high-intent keywords ("USCIS processing time") that capture
+    // search queries like "I-485 employment processing time".
+    const title = `${s.form_code} ${s.category} Processing Time at ${s.office} | USCIS Tracker`;
+    const asOf = s.as_of ?? new Date().toISOString().slice(0, 10);
+    const desc = s.current_display
+      ? `USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}: ${s.current_display} as of ${asOf}. Daily-updated chart and historic fiscal-year averages.`
+      : `Track USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}. Daily-updated chart with historic averages back to FY2014.`;
+
+    const siteUrl = process.env.SITE_URL ?? "https://usciscasestatus.fyi";
+    const canonical = `${siteUrl}/case/${params.slug}`;
+
     return {
       meta: [
         { title },
         { name: "description", content: desc },
-        { property: "og:title", content: `${s.form_code} · ${s.category}` },
-        { property: "og:description", content: `${s.office} — ${s.current_display ?? "Tracking daily"}` },
-        { rel: "canonical", href: `/case/${params.slug}` } as any,
+        { name: "keywords", content: `${s.form_code} processing time, USCIS ${s.form_code}, ${s.category}, ${s.office}, immigration wait time` },
+        { property: "og:title", content: `${s.form_code} ${s.category} — Processing Time` },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: canonical },
+        { property: "og:type", content: "article" },
+        { property: "article:modified_time", content: asOf },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${s.form_code} processing time` },
+        { name: "twitter:description", content: desc },
+        { rel: "canonical", href: canonical } as any,
       ],
     };
   },
@@ -79,31 +96,110 @@ function CasePage() {
     rememberLastCase(summary.slug);
   }, [summary.slug]);
 
-  // JSON-LD for SEO: FAQ schema using the case-specific question users actually search.
+  // ---- SEO + GEO structured data ----
+  // GEO (generative engine optimization): LLMs cite pages that publish
+  // explicit, quote-friendly Q&A pairs. We emit multiple questions covering
+  // the variations real users (and AI search engines) actually ask.
+  const asOfDate = summary.as_of ?? new Date().toISOString().slice(0, 10);
+  const currentRange = summary.current_display ?? "currently tracking";
+  const inquiryDateText = summary.inquiry_date
+    ? new Date(summary.inquiry_date + "T00:00:00Z").toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric",
+      })
+    : null;
+  const tldr = summary.current_display
+    ? `As of ${asOfDate}, USCIS reports a ${currentRange} processing time for Form ${summary.form_code} ${summary.category} cases handled by ${summary.office}. This range represents the time to complete 80% of these cases. ${inquiryDateText ? `If your filing receipt is dated before ${inquiryDateText}, you may submit a case inquiry to USCIS.` : ""}`
+    : `We're collecting daily USCIS snapshots for Form ${summary.form_code} ${summary.category} at ${summary.office}. The chart below shows historic fiscal-year medians back to FY2014.`;
+
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       {
         "@type": "Question",
-        name: `How long is the USCIS processing time for ${summary.form_code} (${summary.category}) at ${summary.office}?`,
+        name: `What is the current USCIS processing time for ${summary.form_code} (${summary.category}) at ${summary.office}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: tldr,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `How long does ${summary.form_code} take in 2026?`,
         acceptedAnswer: {
           "@type": "Answer",
           text: summary.current_display
-            ? `As of ${summary.as_of ?? "the most recent update"}, the published USCIS processing time is ${summary.current_display}. This represents the time it took to complete 80% of cases of this type at this office.`
-            : `We're tracking this case type daily; check the chart for the latest USCIS-published range.`,
+            ? `USCIS currently reports ${currentRange} for ${summary.form_code} ${summary.category} at ${summary.office} (as of ${asOfDate}). USCIS publishes this as the time to complete 80% of cases of this type.`
+            : `USCIS has not published a current range for this category. Historic fiscal-year medians are available in the chart on this page.`,
         },
       },
+      ...(inquiryDateText ? [{
+        "@type": "Question",
+        name: `Can I submit a case inquiry for my ${summary.form_code}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `USCIS accepts case inquiries when your receipt is dated before the displayed inquiry date. For ${summary.form_code} ${summary.category} at ${summary.office}, the current inquiry date is ${inquiryDateText}. If your filing receipt is older than that, you are eligible to submit an inquiry through your USCIS online account.`,
+        },
+      }] : []),
+      {
+        "@type": "Question",
+        name: `Where does this processing time data come from?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `All processing-time figures on this page come directly from USCIS's official Processing Times tool at egov.uscis.gov/processing-times. We snapshot the published ranges every weekday and chart the trend. Historic fiscal-year medians come from USCIS's Historic Processing Times page. This site is independent and not affiliated with USCIS.`,
+        },
+      },
+    ],
+  };
+
+  // Dataset schema — tells AI engines this page hosts time-series data.
+  const datasetLd = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: `USCIS Form ${summary.form_code} ${summary.category} processing time — ${summary.office}`,
+    description: tldr,
+    creator: { "@type": "Organization", name: "Visa Lead Times" },
+    isBasedOn: "https://egov.uscis.gov/processing-times",
+    dateModified: asOfDate,
+    temporalCoverage: "2014-10-01/..",
+    variableMeasured: {
+      "@type": "PropertyValue",
+      name: "Processing time (months)",
+      description: "USCIS-published 80th-percentile completion time range",
+      unitText: "month",
+    },
+    keywords: [
+      summary.form_code,
+      summary.category,
+      summary.office,
+      "USCIS",
+      "processing time",
+      "immigration",
+      "wait time",
+    ].join(", "),
+  };
+
+  // BreadcrumbList schema for site hierarchy.
+  const siteUrl = "https://usciscasestatus.fyi";
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${siteUrl}/` },
+      { "@type": "ListItem", position: 2, name: `Form ${summary.form_code}`, item: `${siteUrl}/form/${formMeta?.slug ?? summary.form_code.toLowerCase()}` },
+      { "@type": "ListItem", position: 3, name: summary.category, item: `${siteUrl}/case/${summary.slug}` },
     ],
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 mx-auto max-w-6xl px-6 py-10 w-full">
+      <main className="flex-1 mx-auto max-w-6xl px-6 py-5 w-full">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
-        <nav className="text-xs text-muted-foreground mb-6">
+        <nav className="text-xs text-muted-foreground mb-3">
           <Link to="/" className="hover:text-primary">Home</Link>
           <span className="mx-2">/</span>
           <Link
@@ -117,12 +213,12 @@ function CasePage() {
           <span>Case</span>
         </nav>
 
-        <header className="border-b rule pb-8 mb-10">
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-            Form {summary.form_code}
+        <header className="border-b rule pb-4 mb-5">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Form {summary.form_code} processing time
           </p>
-          <h1 className="display text-4xl sm:text-5xl text-primary mt-2 max-w-4xl">
-            {summary.category}
+          <h1 className="display text-2xl sm:text-3xl text-primary mt-1 max-w-4xl leading-tight">
+            {summary.form_code} {summary.category}
           </h1>
 
           <OfficeSwitcher
@@ -134,9 +230,9 @@ function CasePage() {
           />
         </header>
 
-        <div className="grid lg:grid-cols-[1fr_300px] gap-10">
+        <div className="grid lg:grid-cols-[1fr_300px] gap-6">
           <div>
-            <div className="grid sm:grid-cols-3 gap-px bg-[var(--color-border)] border rule mb-8">
+            <div className="grid sm:grid-cols-3 gap-px bg-[var(--color-border)] border rule mb-4">
               <Stat label="Current published range" value={summary.current_display ?? "—"} accent />
               <Stat
                 label="30-day change"
@@ -156,32 +252,109 @@ function CasePage() {
 
             <ProcessingTimeChart series={series} />
 
+            {/* TL;DR — written as a single, citable paragraph so AI search
+                engines and Google snippets have a clean block to extract. */}
+            <section
+              className="mt-6 border-l-4 border-accent bg-card px-5 py-4"
+              aria-label="Summary"
+            >
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                Summary · Updated {asOfDate}
+              </p>
+              <p className="text-sm text-foreground leading-relaxed">{tldr}</p>
+            </section>
+
             <SponsoredSlot />
 
-            <section className="prose-sm max-w-none mt-10">
-              <h2 className="display text-2xl text-primary border-b rule pb-3 mb-4">
-                How to read this
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                USCIS publishes a range — for example,{" "}
-                <span className="num text-foreground">{summary.current_display ?? "X–Y months"}</span> —
-                that represents the time it took to complete 80% of cases of this type at this office. The
-                case-inquiry date tells you the receipt date USCIS is currently processing; if your receipt
-                is newer than that date, you generally cannot make a service request yet.
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-3">
-                The chart combines four views: USCIS-published <strong>fiscal-year averages</strong> from
-                FY2015 forward, a <strong>YTD national average</strong> for the current FY, then{" "}
-                <strong>monthly averages</strong> of our daily snapshots, and finally{" "}
-                <strong>daily detail</strong> for the most recent 30 days. A flat line means the published
-                range was unchanged in our snapshots, not that nothing is happening on individual cases.
-              </p>
+            <section className="mt-10 space-y-6">
+              <div>
+                <h2 className="display text-2xl text-primary border-b rule pb-3 mb-3">
+                  How long does {summary.form_code} {summary.category} take?
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {summary.current_display ? (
+                    <>
+                      USCIS currently publishes a range of{" "}
+                      <span className="num text-foreground">{summary.current_display}</span> for{" "}
+                      Form {summary.form_code} {summary.category} cases handled by {summary.office}
+                      {", as of "}
+                      <time dateTime={asOfDate}>{asOfDate}</time>. This is the time to complete 80% of
+                      cases of this type at this office — your case may resolve faster or slower than
+                      the published range.
+                    </>
+                  ) : (
+                    <>
+                      USCIS has not published a current range for this category. The chart above
+                      shows historic fiscal-year medians from USCIS's Historic Processing Times
+                      page so you can see how long similar cases took in prior years.
+                    </>
+                  )}
+                </p>
+              </div>
+
+              {inquiryDateText && (
+                <div>
+                  <h2 className="display text-2xl text-primary border-b rule pb-3 mb-3">
+                    Can I submit a case inquiry?
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    USCIS accepts case inquiries when your receipt date is older than the published
+                    inquiry date. For {summary.form_code} {summary.category} at {summary.office},
+                    that date is currently{" "}
+                    <span className="text-foreground font-medium">{inquiryDateText}</span>. If your
+                    filing receipt is dated before that, you can submit a service request through
+                    your USCIS online account.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <h2 className="display text-2xl text-primary border-b rule pb-3 mb-3">
+                  How to read the chart
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  The chart combines four data sources, oldest to newest: USCIS-published{" "}
+                  <strong>fiscal-year medians</strong> from FY2014 (when available); a current-FY{" "}
+                  <strong>YTD national median</strong> from USCIS's Historic Processing Times page;{" "}
+                  <strong>weekly averages</strong> computed from our daily snapshots; and{" "}
+                  <strong>daily snapshots</strong> for the most recent 30 days. A flat line means the
+                  published range was unchanged in our snapshots, not that nothing is happening on
+                  individual cases.
+                </p>
+              </div>
+
+              <div>
+                <h2 className="display text-2xl text-primary border-b rule pb-3 mb-3">
+                  Source &amp; methodology
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  All processing-time figures on this page come directly from USCIS's official{" "}
+                  <a
+                    className="text-primary underline"
+                    href="https://egov.uscis.gov/processing-times"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Processing Times tool
+                  </a>
+                  . We snapshot the published ranges every weekday and store the time series for trend
+                  analysis. Historic fiscal-year medians come from USCIS's{" "}
+                  <a
+                    className="text-primary underline"
+                    href="https://egov.uscis.gov/processing-times/historic-pt"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Historic Processing Times
+                  </a>{" "}
+                  page. This site is independent and not affiliated with USCIS or any government
+                  agency.
+                </p>
+              </div>
             </section>
           </div>
 
           <div className="space-y-6">
-            <SponsoredSlot variant="sidebar" />
-
             {formMeta && siblings.length > 0 && (
               <div className="border rule bg-card p-5">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
@@ -218,6 +391,8 @@ function CasePage() {
                 </Link>
               </div>
             )}
+
+            <SponsoredSlot variant="sidebar" />
           </div>
         </div>
       </main>
@@ -242,10 +417,10 @@ function Stat({
   const valueColor =
     tone === "good" ? "text-positive" : tone === "warn" ? "text-accent" : "text-primary";
   return (
-    <div className="bg-card p-5">
+    <div className="bg-card px-4 py-3">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className={`display text-2xl mt-2 num ${accent ? "text-primary" : valueColor}`}>{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>}
+      <div className={`display text-xl mt-1 num ${accent ? "text-primary" : valueColor}`}>{value}</div>
+      {sub && <div className="text-[10px] text-muted-foreground mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -302,14 +477,14 @@ function OfficeSwitcher({
   const navigate = useNavigate();
   // Single-office case: just show the office name, no picker.
   if (siblings.length === 0) {
-    return <p className="mt-3 text-lg text-muted-foreground">{currentOffice}</p>;
+    return <p className="mt-2 text-base text-muted-foreground">{currentOffice}</p>;
   }
   const options = [
     { slug: currentSlug, office: currentOffice },
     ...siblings.filter((s) => s.slug !== currentSlug),
   ];
   return (
-    <div className="mt-4 flex items-center gap-3 flex-wrap">
+    <div className="mt-2 flex items-center gap-3 flex-wrap">
       <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
         Service center
       </span>
@@ -318,7 +493,7 @@ function OfficeSwitcher({
           aria-label="Switch service center"
           value={currentSlug}
           onChange={(e) => navigate({ to: "/case/$slug", params: { slug: e.target.value } })}
-          className="appearance-none bg-card border rule px-4 py-2 pr-9 text-base font-medium text-primary focus:outline-none focus:ring-2 focus:ring-ring/40 cursor-pointer"
+          className="appearance-none bg-card border rule px-3 py-1.5 pr-8 text-sm font-medium text-primary focus:outline-none focus:ring-2 focus:ring-ring/40 cursor-pointer"
         >
           {options.map((o) => (
             <option key={o.slug} value={o.slug}>

@@ -7,6 +7,7 @@
  * Callers should never know which backend served the data.
  */
 import { getSupabase, hasSupabase } from "../supabase.server";
+import { caseSlug } from "../slug";
 import { liveForms, liveLatest, liveRaw, type LiveRow } from "./live-api.server";
 
 export type FormDTO = { code: string; label: string; slug: string };
@@ -105,9 +106,16 @@ export async function repoCases(form?: string): Promise<CaseDTO[]> {
 
 function rowToCase(r: LiveRow): CaseDTO {
   const [lo, hi] = parseRange(r.processing_time_display);
+  const form_code = extractFormCode(r.logical_case_name);
+  // For the live-API path we don't have a global collision-resolution pass,
+  // so we always append the deterministic short hash. That guarantees parity
+  // with whatever the sync wrote for rows that DID collide, at the cost of a
+  // slightly longer slug on rows that didn't. Stable across both backends.
+  // (See scripts/sync-sheet-to-supabase.ts → shortHash for the canonical impl.)
+  const base = caseSlug(form_code, r.category_label_selected, r.office_label_selected);
   return {
-    slug: slugify(r.logical_case_name),
-    form_code: extractFormCode(r.logical_case_name),
+    slug: base, // Supabase path is authoritative; live-API is fallback only
+    form_code,
     name: r.logical_case_name,
     category: r.category_label_selected,
     office: r.office_label_selected,
@@ -199,11 +207,26 @@ export async function repoHistoricForForm(
       .select("*")
       .eq("form_code", form_code)
       .order("fiscal_year");
-    if (data?.length) return data as HistoricYearDTO[];
+    if (data?.length) {
+      // Many forms have multiple classifications (I-129 Premium vs non-Premium,
+      // I-485 with 6 categories, etc.). If we return them all, the chart line
+      // zigzags through every FY twice. Pick the best matching classification
+      // for the user's specific case and return only its rows.
+      const byClass = new Map<string, HistoricYearDTO[]>();
+      for (const row of data as HistoricYearDTO[]) {
+        const k = row.classification;
+        if (!byClass.has(k)) byClass.set(k, []);
+        byClass.get(k)!.push(row);
+      }
+      if (byClass.size === 1) return data as HistoricYearDTO[];
+      const candidates = [...byClass.keys()];
+      const chosen = category
+        ? pickBestText(category, candidates)
+        : candidates[0];
+      return byClass.get(chosen) ?? (data as HistoricYearDTO[]);
+    }
   }
-  // JSON fallback (bundled seed). New compact format: each entry has a `years`
-  // map keyed by FY. We pick the best classification per the case category,
-  // then expand into one HistoricYearDTO per year.
+  // JSON fallback (bundled seed).
   try {
     const mod: any = await import("../../../data/historic-pt-seed.json");
     const all: any[] = (mod.default ?? mod).filter(
@@ -228,6 +251,59 @@ export async function repoHistoricForForm(
   } catch {
     return [];
   }
+}
+
+/**
+ * Pick the best matching classification for `target` from `candidates`.
+ *
+ * Strategy:
+ * 1. Apply a premium-processing filter — if the target case doesn't mention
+ *    "premium", drop Premium-only classifications. (USCIS publishes I-129
+ *    Premium and non-Premium as separate classifications; a regular H-1B
+ *    case should see non-Premium historic data, not the ~0.5mo Premium line.)
+ * 2. Score remaining candidates by word overlap with the target text.
+ * 3. Tiebreaker: prefer the longer classification name (heuristic — "non
+ *    Premium filed" beats "Premium filed" on a tie when both are eligible).
+ */
+function pickBestText(target: string, candidates: string[]): string {
+  const tLower = target.toLowerCase();
+  const wantsPremium = /\bpremium\b/i.test(tLower);
+
+  // Premium filter
+  let pool = candidates;
+  const anyPremium = candidates.some((c) => /\bpremium\b/i.test(c));
+  if (anyPremium) {
+    if (wantsPremium) {
+      const premiumOnly = candidates.filter(
+        (c) => /\bpremium\b/i.test(c) && !/non[\s-]*premium/i.test(c)
+      );
+      if (premiumOnly.length) pool = premiumOnly;
+    } else {
+      const nonPremium = candidates.filter(
+        (c) => !/\bpremium\b/i.test(c) || /non[\s-]*premium/i.test(c)
+      );
+      if (nonPremium.length) pool = nonPremium;
+    }
+  }
+
+  const tokenize = (s: string) =>
+    new Set(
+      s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 2)
+    );
+  const t = tokenize(target);
+  let best = pool[0];
+  let bestScore = -1;
+  for (const c of pool) {
+    const cand = tokenize(c);
+    let overlap = 0;
+    for (const w of t) if (cand.has(w)) overlap++;
+    // Length-based tiebreaker for equal scores
+    if (overlap > bestScore || (overlap === bestScore && c.length > best.length)) {
+      bestScore = overlap;
+      best = c;
+    }
+  }
+  return best;
 }
 
 /** Word-overlap scorer to map a user's case category to a USCIS classification. */
