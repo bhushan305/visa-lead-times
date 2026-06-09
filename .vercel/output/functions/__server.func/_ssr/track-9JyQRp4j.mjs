@@ -1,6 +1,5 @@
-import { c as createServerRpc } from "./createServerRpc-Bq8_OHzE.mjs";
-import { c as createServerFn } from "./server-DNzsfDsc.mjs";
-import { c as createClient } from "../_libs/supabase__supabase-js.mjs";
+import { c as createServerRpc } from "./createServerRpc-BEnvNtoQ.mjs";
+import { c as createServerFn } from "./server-BQ76axSV.mjs";
 import "../_libs/seroval.mjs";
 import "../_libs/react.mjs";
 import "node:async_hooks";
@@ -20,31 +19,41 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "../_libs/supabase__postgrest-js.mjs";
-import "../_libs/supabase__realtime-js.mjs";
-import "../_libs/supabase__phoenix.mjs";
-import "../_libs/supabase__storage-js.mjs";
-import "../_libs/iceberg-js.mjs";
-import "../_libs/supabase__auth-js.mjs";
-import "tslib";
-import "../_libs/supabase__functions-js.mjs";
-let _writer = null;
-function getWriter() {
-  if (_writer) return _writer;
+function readServerCreds() {
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return null;
-  _writer = createClient(url, key, { auth: { persistSession: false } });
-  return _writer;
+  return { url, key };
+}
+async function pgrestInsert(table, row) {
+  const creds = readServerCreds();
+  if (!creds) return { ok: false, reason: "no-supabase" };
+  try {
+    const res = await fetch(`${creds.url}/rest/v1/${table}`, {
+      method: "POST",
+      headers: {
+        apikey: creds.key,
+        Authorization: `Bearer ${creds.key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify([row])
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return { ok: false, reason: `${res.status} ${text.slice(0, 200)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e?.message ?? String(e) };
+  }
 }
 const MAX_LABEL = 120;
 const MAX_HIERARCHY = 240;
 const clamp = (s, n) => s == null ? null : s.length > n ? s.slice(0, n) : s;
 async function recordPageView(p) {
-  const sb = getWriter();
-  if (!sb) return { ok: false, reason: "no-supabase" };
   if (!p.user_id) return { ok: false, reason: "no-user-id" };
-  const { error } = await sb.from("page_views").insert({
+  const result = await pgrestInsert("page_views", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
     page_path: clamp(p.page_path, 512),
@@ -52,13 +61,11 @@ async function recordPageView(p) {
     user_agent: clamp(p.user_agent ?? null, 512),
     load_ms: p.load_ms ?? null
   });
-  return error ? { ok: false, reason: error.message } : { ok: true };
+  return result;
 }
 async function recordClick(p) {
-  const sb = getWriter();
-  if (!sb) return { ok: false, reason: "no-supabase" };
   if (!p.user_id) return { ok: false, reason: "no-user-id" };
-  const { error } = await sb.from("click_events").insert({
+  return pgrestInsert("click_events", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
     page_path: clamp(p.page_path, 512),
@@ -71,7 +78,6 @@ async function recordClick(p) {
     target_kind: p.target_kind ?? null,
     data_attrs: p.data_attrs ?? null
   });
-  return error ? { ok: false, reason: error.message } : { ok: true };
 }
 const trackBatch_createServerFn_handler = createServerRpc({
   id: "4d6296202bf5c35b0329991759d93a18a28e88d917e6a4e3a21b379a696a243c",

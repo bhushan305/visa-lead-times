@@ -3,7 +3,7 @@ import { Q as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { c as createRouter, a as createRootRouteWithContext, u as useRouter, L as Link, O as Outlet, H as HeadContent, S as Scripts, b as createFileRoute, l as lazyRouteComponent } from "../_libs/tanstack__react-router.mjs";
 import { S as notFound, m as isRedirect } from "../_libs/tanstack__router-core.mjs";
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
-import { c as createServerFn, T as TSS_SERVER_FUNCTION, g as getServerFnById } from "./server-DNzsfDsc.mjs";
+import { c as createServerFn, T as TSS_SERVER_FUNCTION, g as getServerFnById } from "./server-BQ76axSV.mjs";
 import "../_libs/react-dom.mjs";
 import "util";
 import "crypto";
@@ -388,7 +388,7 @@ createServerFn({
 const getFormPageBundle = createServerFn({
   method: "GET"
 }).inputValidator((d) => d).handler(createSsrRpc("28c6b26bcd0da259730acc02a56ccd654c8abe8bd83042f071eb170d8432dcef"));
-const $$splitComponentImporter$5 = () => import("./forms-CRZbsXKi.mjs");
+const $$splitComponentImporter$5 = () => import("./forms-gfKMOE5I.mjs");
 const Route$5 = createFileRoute("/forms")({
   loader: async () => {
     const [formsRaw, casesRaw] = await Promise.all([getAllForms(), getAllCases()]);
@@ -417,7 +417,7 @@ const Route$5 = createFileRoute("/forms")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$5, "component")
 });
-const $$splitComponentImporter$4 = () => import("./about-9VLbZ3Qk.mjs");
+const $$splitComponentImporter$4 = () => import("./about-A_O3jEcn.mjs");
 const Route$4 = createFileRoute("/about")({
   head: () => ({
     meta: [{
@@ -429,7 +429,7 @@ const Route$4 = createFileRoute("/about")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./index-B9cKf6yZ.mjs");
+const $$splitComponentImporter$3 = () => import("./index-BBSHMYFc.mjs");
 const Route$3 = createFileRoute("/")({
   loader: async () => {
     const [formsRaw, casesRaw] = await Promise.all([getAllForms(), getAllCases()]);
@@ -516,8 +516,8 @@ function SiteFooter() {
   ] }) });
 }
 const $$splitErrorComponentImporter$1 = () => import("./form._code-C_itxYqA.mjs");
-const $$splitNotFoundComponentImporter$1 = () => import("./form._code-cyjppWFd.mjs");
-const $$splitComponentImporter$2 = () => import("./form._code-B_N1BbwO.mjs");
+const $$splitNotFoundComponentImporter$1 = () => import("./form._code-C5KmmLGX.mjs");
+const $$splitComponentImporter$2 = () => import("./form._code-DsV32kvP.mjs");
 const Route$2 = createFileRoute("/form/$code")({
   loader: async ({
     params
@@ -601,7 +601,7 @@ const Route$2 = createFileRoute("/form/$code")({
 });
 const $$splitErrorComponentImporter = () => import("./case._slug-3mvobz26.mjs");
 const $$splitNotFoundComponentImporter = () => import("./case._slug-C1rtaNIz.mjs");
-const $$splitComponentImporter$1 = () => import("./case._slug-Bydnwptj.mjs");
+const $$splitComponentImporter$1 = () => import("./case._slug-BnZNnLEO.mjs");
 const Route$1 = createFileRoute("/case/$slug")({
   // Single round-trip bundle so cold loads aren't bottlenecked by serial
   // Apps Script API calls. See lib/case.functions.ts → getCasePageBundle.

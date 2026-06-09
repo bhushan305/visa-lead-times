@@ -1,6 +1,6 @@
-import { c as createServerRpc } from "./createServerRpc-Bq8_OHzE.mjs";
-import { c as createServerFn } from "./server-DNzsfDsc.mjs";
-import { r as repoCase, a as repoDaily, b as repoMonthly, c as repoHistoricForForm, d as repoForms, e as repoCases, f as repoLastSync } from "./repo.server-ChI8jL-2.mjs";
+import { c as createServerRpc } from "./createServerRpc-BEnvNtoQ.mjs";
+import { c as createServerFn } from "./server-BQ76axSV.mjs";
+import { r as repoCase, a as repoDaily, b as repoMonthly, c as repoHistoricForForm, d as repoForms, e as repoCases, f as repoLastSync } from "./repo.server-DJRlbpet.mjs";
 import "../_libs/seroval.mjs";
 import "../_libs/react.mjs";
 import "node:async_hooks";
@@ -20,16 +20,6 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "../_libs/supabase__supabase-js.mjs";
-import "../_libs/supabase__postgrest-js.mjs";
-import "../_libs/supabase__realtime-js.mjs";
-import "../_libs/supabase__phoenix.mjs";
-import "../_libs/supabase__storage-js.mjs";
-import "../_libs/iceberg-js.mjs";
-import "../_libs/supabase__auth-js.mjs";
-import "tslib";
-import "../_libs/supabase__functions-js.mjs";
-import "./slug-Dep3TFBB.mjs";
 const getCaseDetail_createServerFn_handler = createServerRpc({
   id: "d4ac6c73be1f2a6cd38464e9f928196851ab708e67ecfc87179eed6bcbfcfb5b",
   name: "getCaseDetail",

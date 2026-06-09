@@ -1,23 +1,217 @@
-import { c as createClient } from "../_libs/supabase__supabase-js.mjs";
-import { c as caseSlug } from "./slug-Dep3TFBB.mjs";
-let cached = null;
+let cachedUrl = null;
+let cachedKey = null;
 function readUrl() {
-  return process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? null;
+  if (cachedUrl) return cachedUrl;
+  cachedUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? null;
+  return cachedUrl;
 }
 function readKey() {
-  return process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? // fallback: scripts/cron can reuse this
-  process.env.SUPABASE_SECRET_KEY ?? null;
+  if (cachedKey) return cachedKey;
+  cachedKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? null;
+  return cachedKey;
 }
+function hasSupabase() {
+  return !!(readUrl() && readKey());
+}
+function fq(value) {
+  return encodeURIComponent(String(value));
+}
+class Query {
+  url;
+  key;
+  table;
+  cols = "*";
+  filters = [];
+  orderBy = null;
+  rangeLimit = null;
+  constructor(url, key, table) {
+    this.url = url;
+    this.key = key;
+    this.table = table;
+  }
+  select(cols) {
+    this.cols = cols;
+    return this;
+  }
+  eq(col, value) {
+    this.filters.push(`${col}=eq.${fq(value)}`);
+    return this;
+  }
+  gte(col, value) {
+    this.filters.push(`${col}=gte.${fq(value)}`);
+    return this;
+  }
+  in(col, values) {
+    const list = values.map((v) => encodeURIComponent(String(v))).join(",");
+    this.filters.push(`${col}=in.(${list})`);
+    return this;
+  }
+  not(col, op, value) {
+    this.filters.push(`${col}=not.${op}.${fq(value)}`);
+    return this;
+  }
+  order(col, opts) {
+    const dir = opts?.ascending === false ? "desc" : "asc";
+    this.orderBy = `${col}.${dir}`;
+    return this;
+  }
+  limit(n) {
+    this.rangeLimit = n;
+    return this;
+  }
+  buildUrl() {
+    const params = [...this.filters, `select=${this.cols}`];
+    if (this.orderBy) params.push(`order=${this.orderBy}`);
+    if (this.rangeLimit != null) params.push(`limit=${this.rangeLimit}`);
+    return `${this.url}/rest/v1/${this.table}?${params.join("&")}`;
+  }
+  headers() {
+    return {
+      apikey: this.key,
+      Authorization: `Bearer ${this.key}`,
+      "Content-Type": "application/json"
+    };
+  }
+  /** Resolve as a Promise<{ data, error }>. */
+  then(onfulfilled, onrejected) {
+    return this.exec().then(onfulfilled, onrejected);
+  }
+  async exec() {
+    try {
+      const res = await fetch(this.buildUrl(), { headers: this.headers() });
+      if (!res.ok) {
+        const text = await res.text();
+        return {
+          data: [],
+          error: { message: text, code: String(res.status) }
+        };
+      }
+      const data = await res.json();
+      return { data, error: null };
+    } catch (e) {
+      return { data: [], error: { message: e?.message ?? String(e) } };
+    }
+  }
+  /** Convenience: return the first row or null. Matches supabase-js .maybeSingle(). */
+  async maybeSingle() {
+    const { data, error } = await this.exec();
+    if (error) return { data: null, error };
+    return { data: data?.[0] ?? null, error: null };
+  }
+}
+class Table {
+  constructor(url, key, table) {
+    this.url = url;
+    this.key = key;
+    this.table = table;
+  }
+  url;
+  key;
+  table;
+  select(cols = "*") {
+    return new Query(this.url, this.key, this.table).select(cols);
+  }
+  async insert(rows) {
+    const body = Array.isArray(rows) ? rows : [rows];
+    try {
+      const res = await fetch(`${this.url}/rest/v1/${this.table}`, {
+        method: "POST",
+        headers: {
+          apikey: this.key,
+          Authorization: `Bearer ${this.key}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        return { data: null, error: { message: text, code: String(res.status) } };
+      }
+      return { data: null, error: null };
+    } catch (e) {
+      return { data: null, error: { message: e?.message ?? String(e) } };
+    }
+  }
+  async upsert(rows, opts) {
+    const body = Array.isArray(rows) ? rows : [rows];
+    const params = opts?.onConflict ? `?on_conflict=${opts.onConflict}` : "";
+    try {
+      const res = await fetch(`${this.url}/rest/v1/${this.table}${params}`, {
+        method: "POST",
+        headers: {
+          apikey: this.key,
+          Authorization: `Bearer ${this.key}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal"
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        return { data: null, error: { message: text, code: String(res.status) } };
+      }
+      return { data: null, error: null };
+    } catch (e) {
+      return { data: null, error: { message: e?.message ?? String(e) } };
+    }
+  }
+}
+class SupabaseLite {
+  constructor(url, key) {
+    this.url = url;
+    this.key = key;
+  }
+  url;
+  key;
+  from(table) {
+    return new Table(this.url, this.key, table);
+  }
+  /** Stubbed — we don't call rpc on the read path; kept for type compat. */
+  async rpc(_name, _params) {
+    return { data: null, error: null };
+  }
+}
+let cached = null;
 function getSupabase() {
   if (cached) return cached;
   const url = readUrl();
   const key = readKey();
   if (!url || !key) return null;
-  cached = createClient(url, key, { auth: { persistSession: false } });
+  cached = new SupabaseLite(url, key);
   return cached;
 }
-function hasSupabase() {
-  return !!(readUrl() && readKey());
+const OFFICE_ABBREV = [
+  [/service\s*center\s*operations\s*\(?\s*scops\s*\)?/i, "scops"],
+  [/national\s*benefits\s*center\s*\(?\s*nbc\s*\)?/i, "nbc"],
+  [/california\s*service\s*center/i, "csc"],
+  [/texas\s*service\s*center/i, "tsc"],
+  [/nebraska\s*service\s*center/i, "nsc"],
+  [/vermont\s*service\s*center/i, "vsc"],
+  [/potomac\s*service\s*center/i, "psc"],
+  [/all\s*field\s*offices/i, "all-offices"]
+];
+function normaliseOffice(s) {
+  let out = s;
+  for (const [re, abbr] of OFFICE_ABBREV) out = out.replace(re, abbr);
+  return out;
+}
+function stripUscisCodes(s) {
+  return s.replace(/\[[^\]]+\]/g, " ").replace(/\(([^)]+)\)/g, (_m, inside) => {
+    const meaningful = /^[A-Z]-?\d|^[A-Z]\d-?[A-Z]|^[CO]\d{1,2}$/i.test(inside.trim());
+    return meaningful ? ` ${inside} ` : " ";
+  }).replace(/^[\s-]*\d{2,4}[a-z]?\s*-\s*/i, "").replace(/\b[A-Z]\d{2,3}\b(?!\s*[A-Z])/g, " ");
+}
+function slugifyText(s) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+function caseSlug(form_code, category, office) {
+  const form = slugifyText(form_code);
+  const cat = slugifyText(stripUscisCodes(category));
+  const off = slugifyText(normaliseOffice(office));
+  const raw = [form, cat, off].filter(Boolean).join("-");
+  if (raw.length <= 100) return raw;
+  return raw.slice(0, 100).replace(/-+[^-]*$/, "");
 }
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL ?? "https://script.google.com/macros/s/AKfycbwF37kFPBEYOCS9t33Ai5gzoL_XkYBFfMsKzCt9SameFmPf30wOQkqbbqn53njCdrAZ/exec";
 const memo = /* @__PURE__ */ new Map();

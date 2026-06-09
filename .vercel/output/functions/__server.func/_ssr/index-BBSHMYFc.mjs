@@ -1,6 +1,6 @@
 import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { L as Link } from "../_libs/tanstack__react-router.mjs";
-import { b as Route$3, S as SiteHeader, a as SiteFooter } from "./router-CUjoYMPn.mjs";
+import { b as Route$3, S as SiteHeader, a as SiteFooter } from "./router-Be1gyKw9.mjs";
 import { S as SponsoredSlot } from "./sponsored-slot-DN8x9ydN.mjs";
 import { r as readLastCase, b as buildSearchGrouped } from "./preferences-BU_TXqCD.mjs";
 import "../_libs/seroval.mjs";
@@ -18,7 +18,7 @@ import "stream";
 import "../_libs/isbot.mjs";
 import "../_libs/tanstack__query-core.mjs";
 import "../_libs/tanstack__react-query.mjs";
-import "./server-DNzsfDsc.mjs";
+import "./server-BQ76axSV.mjs";
 import "node:async_hooks";
 import "../_libs/h3-v2.mjs";
 import "../_libs/rou3.mjs";

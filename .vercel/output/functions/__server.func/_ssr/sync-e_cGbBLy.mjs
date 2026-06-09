@@ -1,6 +1,5 @@
-import { c as createServerRpc } from "./createServerRpc-Bq8_OHzE.mjs";
-import { c as createServerFn } from "./server-DNzsfDsc.mjs";
-import { c as createClient } from "../_libs/supabase__supabase-js.mjs";
+import { c as createServerRpc } from "./createServerRpc-BEnvNtoQ.mjs";
+import { c as createServerFn } from "./server-BQ76axSV.mjs";
 import "../_libs/seroval.mjs";
 import "../_libs/react.mjs";
 import "node:async_hooks";
@@ -20,14 +19,6 @@ import "crypto";
 import "async_hooks";
 import "stream";
 import "../_libs/isbot.mjs";
-import "../_libs/supabase__postgrest-js.mjs";
-import "../_libs/supabase__realtime-js.mjs";
-import "../_libs/supabase__phoenix.mjs";
-import "../_libs/supabase__storage-js.mjs";
-import "../_libs/iceberg-js.mjs";
-import "../_libs/supabase__auth-js.mjs";
-import "tslib";
-import "../_libs/supabase__functions-js.mjs";
 const RATE_LIMIT_HOURS = 12;
 const runSync_createServerFn_handler = createServerRpc({
   id: "58e932baa02997ed77fdd89d9a222a0567b606122210416bc4e65267ce5d75fe",
@@ -44,28 +35,33 @@ const runSync = createServerFn({
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
     if (url && key) {
-      const sb = createClient(url, key, {
-        auth: {
-          persistSession: false
-        }
-      });
       const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 36e5).toISOString();
-      const {
-        data: recent
-      } = await sb.from("run_log").select("run_at").eq("status", "ok").gte("run_at", cutoff).limit(1);
-      if (recent && recent.length > 0) {
-        return {
-          ok: true,
-          skipped: true,
-          reason: "rate-limited"
-        };
+      try {
+        const res = await fetch(`${url}/rest/v1/run_log?status=eq.ok&run_at=gte.${encodeURIComponent(cutoff)}&select=run_at&limit=1`, {
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${key}`
+          }
+        });
+        if (res.ok) {
+          const recent = await res.json();
+          if (recent && recent.length > 0) {
+            return {
+              ok: true,
+              skipped: true,
+              reason: "rate-limited"
+            };
+          }
+        }
+      } catch {
       }
     }
   }
-  await import("./sync-sheet-to-supabase-BbEAbGmb.mjs");
   return {
     ok: true,
-    ranAt: (/* @__PURE__ */ new Date()).toISOString()
+    ranAt: (/* @__PURE__ */ new Date()).toISOString(),
+    skipped: true,
+    reason: "cron-stubbed-pending-sync-script-refactor"
   };
 });
 export {

@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 
 /**
  * Daily sync endpoint hit by Vercel Cron (configured in vercel.json).
@@ -26,7 +25,8 @@ const runSync = createServerFn({ method: "GET" })
       (process.env.CRON_SECRET && data.secret === process.env.CRON_SECRET);
 
     if (!forced) {
-      // Rate-limit: if a successful sync happened in the last 12h, skip.
+      // Rate-limit via direct PostgREST fetch (not @supabase/supabase-js — that
+      // pulls in @supabase/auth-js / tslib and Nitro can't bundle it cleanly).
       const url =
         process.env.SUPABASE_URL ??
         process.env.NEXT_PUBLIC_SUPABASE_URL ??
@@ -34,24 +34,35 @@ const runSync = createServerFn({ method: "GET" })
       const key =
         process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
       if (url && key) {
-        const sb = createClient(url, key, { auth: { persistSession: false } });
         const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 3600_000).toISOString();
-        const { data: recent } = await sb
-          .from("run_log")
-          .select("run_at")
-          .eq("status", "ok")
-          .gte("run_at", cutoff)
-          .limit(1);
-        if (recent && recent.length > 0) {
-          return { ok: true, skipped: true, reason: "rate-limited" };
+        try {
+          const res = await fetch(
+            `${url}/rest/v1/run_log?status=eq.ok&run_at=gte.${encodeURIComponent(cutoff)}&select=run_at&limit=1`,
+            { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+          );
+          if (res.ok) {
+            const recent = (await res.json()) as any[];
+            if (recent && recent.length > 0) {
+              return { ok: true, skipped: true, reason: "rate-limited" };
+            }
+          }
+        } catch {
+          // If the rate-limit check itself fails, let the sync run.
         }
       }
     }
 
-    // Dynamic import keeps the heavy sync script out of the SSR bundle until
-    // the cron actually fires.
-    await import("../../../../scripts/sync-sheet-to-supabase");
-    return { ok: true, ranAt: new Date().toISOString() };
+    // NOTE: the heavy sync script uses @supabase/supabase-js (auth-js / tslib),
+    // which Nitro can't bundle cleanly for Vercel. Until the script is
+    // refactored to use raw PostgREST, the cron is a no-op stub. Run
+    // `npm run sync` locally on a schedule (or use Apps Script's existing
+    // daily Chrome MCP scrape, which already populates the source sheet).
+    return {
+      ok: true,
+      ranAt: new Date().toISOString(),
+      skipped: true,
+      reason: "cron-stubbed-pending-sync-script-refactor",
+    };
   });
 
 export const Route = createFileRoute("/api/cron/sync")({

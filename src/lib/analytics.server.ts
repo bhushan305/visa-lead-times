@@ -6,14 +6,12 @@
  * `getWebRequest` (which isn't exported by every version of @tanstack/react-start)
  * and is also more privacy-friendly — no IP processing anywhere on the server.
  *
- * Writes use the service-role Supabase client so they bypass RLS (the
- * page_views / click_events tables are read-locked).
+ * Writes go via raw PostgREST fetch (not @supabase/supabase-js) — see
+ * supabase.server.ts for the rationale. Service-role key bypasses RLS so the
+ * read-locked page_views / click_events tables accept inserts.
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let _writer: SupabaseClient | null = null;
-function getWriter(): SupabaseClient | null {
-  if (_writer) return _writer;
+function readServerCreds(): { url: string; key: string } | null {
   const url =
     process.env.SUPABASE_URL ??
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
@@ -21,8 +19,34 @@ function getWriter(): SupabaseClient | null {
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return null;
-  _writer = createClient(url, key, { auth: { persistSession: false } });
-  return _writer;
+  return { url, key };
+}
+
+async function pgrestInsert(
+  table: string,
+  row: any
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const creds = readServerCreds();
+  if (!creds) return { ok: false, reason: "no-supabase" };
+  try {
+    const res = await fetch(`${creds.url}/rest/v1/${table}`, {
+      method: "POST",
+      headers: {
+        apikey: creds.key,
+        Authorization: `Bearer ${creds.key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify([row]),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return { ok: false, reason: `${res.status} ${text.slice(0, 200)}` };
+    }
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, reason: e?.message ?? String(e) };
+  }
 }
 
 export type PageViewPayload = {
@@ -54,10 +78,8 @@ const clamp = (s: string | null | undefined, n: number) =>
   s == null ? null : s.length > n ? s.slice(0, n) : s;
 
 export async function recordPageView(p: PageViewPayload) {
-  const sb = getWriter();
-  if (!sb) return { ok: false, reason: "no-supabase" as const };
   if (!p.user_id) return { ok: false, reason: "no-user-id" as const };
-  const { error } = await sb.from("page_views").insert({
+  const result = await pgrestInsert("page_views", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
     page_path: clamp(p.page_path, 512),
@@ -65,14 +87,12 @@ export async function recordPageView(p: PageViewPayload) {
     user_agent: clamp(p.user_agent ?? null, 512),
     load_ms: p.load_ms ?? null,
   });
-  return error ? { ok: false, reason: error.message } : { ok: true };
+  return result;
 }
 
 export async function recordClick(p: ClickPayload) {
-  const sb = getWriter();
-  if (!sb) return { ok: false, reason: "no-supabase" as const };
   if (!p.user_id) return { ok: false, reason: "no-user-id" as const };
-  const { error } = await sb.from("click_events").insert({
+  return pgrestInsert("click_events", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
     page_path: clamp(p.page_path, 512),
@@ -85,5 +105,4 @@ export async function recordClick(p: ClickPayload) {
     target_kind: p.target_kind ?? null,
     data_attrs: p.data_attrs ?? null,
   });
-  return error ? { ok: false, reason: error.message } : { ok: true };
 }
