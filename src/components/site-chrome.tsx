@@ -38,7 +38,17 @@ export function SiteFooter() {
           not affiliated with USCIS or any government agency. Information is provided for
           general guidance and is not legal advice.
         </p>
-        <p className="mt-4">© {new Date().getFullYear()} Visa Lead Times. Source: USCIS.gov.</p>
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 items-center">
+          <p>© {new Date().getFullYear()} Visa Lead Times. Source: USCIS.gov.</p>
+          <a
+            href="https://litwinlaw.com/?utm_source=visa-lead-times&utm_medium=referral&utm_campaign=free_consult&utm_content=footer"
+            target="_blank"
+            rel="noopener sponsored"
+            className="hover:text-primary"
+          >
+            Need legal help? Free consult at Litwin Law →
+          </a>
+        </div>
       </div>
     </footer>
   );

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { SponsoredSlot } from "@/components/sponsored-slot";
+import { LitwinCTA } from "@/components/litwin-cta";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
 import { buildSearchGrouped, type CaseSummary, type FormGroup } from "@/lib/processing-times";
 import { readLastCase } from "@/lib/preferences";
@@ -186,6 +187,9 @@ function HomePage() {
           </div>
 
           <SponsoredSlot />
+
+          {/* High-intent: visitor just browsed cases. Offer pro help if needed. */}
+          <LitwinCTA variant="inline" context="home:after-forms" />
 
           <div className="flex items-baseline justify-between border-b rule pb-4 mb-8 mt-16">
             <h2 className="display text-3xl text-primary">Why this exists</h2>

@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AnalyticsProvider } from "../components/analytics-provider";
+import { FeedbackForm } from "../components/feedback-form";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,8 @@ function RootComponent() {
       <AnalyticsProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        {/* Global floating feedback button, available on every page. */}
+        <FeedbackForm variant="modal" />
       </AnalyticsProvider>
     </QueryClientProvider>
   );

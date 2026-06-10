@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { SponsoredSlot } from "@/components/sponsored-slot";
 import { ProcessingTimeChart } from "@/components/processing-time-chart";
+import { LitwinCTA } from "@/components/litwin-cta";
+import { FeedbackForm } from "@/components/feedback-form";
 import { buildSeries, formatMonths, trendDelta } from "@/lib/processing-times";
 import { getCasePageBundle } from "@/lib/case.functions";
 import { rememberLastCase } from "@/lib/preferences";
@@ -305,6 +307,8 @@ function CasePage() {
                     filing receipt is dated before that, you can submit a service request through
                     your USCIS online account.
                   </p>
+                  {/* High-intent moment — user is reading about delayed cases. */}
+                  <LitwinCTA variant="inline" context={`case:${summary.form_code}:inquiry-date`} />
                 </div>
               )}
 
@@ -392,9 +396,18 @@ function CasePage() {
               </div>
             )}
 
+            <LitwinCTA variant="sidebar" context={`case:${summary.form_code}:sidebar`} />
             <SponsoredSlot variant="sidebar" />
           </div>
         </div>
+
+        {/* Inline feedback at bottom — users who scrolled this far are engaged. */}
+        <FeedbackForm
+          variant="inline"
+          caseSlug={summary.slug}
+          title="Spot something off?"
+          subtitle="Tell us — we read every note."
+        />
       </main>
       <SiteFooter />
     </div>

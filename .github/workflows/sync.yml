@@ -1,0 +1,38 @@
+name: Daily Supabase Sync
+
+# Runs the Apps Script → Supabase sync once a day at 9 AM Pacific (17:00 UTC).
+# Apps Script's own daily Chrome MCP scrape writes the sheet at 9 AM PT; this
+# job runs shortly after so the latest snapshot lands in Supabase the same day.
+#
+# Free tier: unlimited minutes on public repos, 2000 min/mo on private. One run
+# uses ~1 minute. Trigger manually anytime via the "Run workflow" button on the
+# Actions tab.
+
+on:
+  schedule:
+    - cron: "30 17 * * *" # 9:30 AM PT (gives Apps Script a 30-min head start)
+  workflow_dispatch: # adds a manual-trigger button in the GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Run sync
+        run: npm run sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
