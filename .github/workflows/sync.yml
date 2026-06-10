@@ -28,7 +28,11 @@ jobs:
           cache: "npm"
 
       - name: Install deps
-        run: npm ci --no-audit --no-fund
+        # Use `npm install` (not `npm ci`) because lockfile drift between
+        # local npm and the runner's npm version was causing EUSAGE errors.
+        # `install` resolves the dependency tree fresh — slightly slower but
+        # tolerates lockfile/package.json mismatches. Fine for a daily cron.
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Run sync
         # Use `sync:ci` (not `sync`) — the local `sync` script loads .env.local
