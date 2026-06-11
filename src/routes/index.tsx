@@ -87,13 +87,16 @@ function HomePage() {
               Updated daily · Source: USCIS.gov
             </p>
             <h1 className="display text-5xl sm:text-7xl text-primary mt-4 leading-[1.02] max-w-4xl">
-              How long is your visa really&nbsp;taking?
+              USCIS processing times,&nbsp;decoded.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-              We collect USCIS-published processing times every weekday for{" "}
+              Daily snapshots, weekly averages, and a decade of fiscal-year history for{" "}
               <span className="num text-foreground">{allCases.length.toLocaleString()}</span>{" "}
-              case types across every service center, then plot the daily trend so you can see
-              when your wait is moving — not just where it stands today.
+              case types across every USCIS service center. See exactly when the wait moved —
+              not just where it stands today.
+            </p>
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+              Pick a form below — or search by visa type, category, or office.
             </p>
 
             <div className="mt-10">
