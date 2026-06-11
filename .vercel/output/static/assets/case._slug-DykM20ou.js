@@ -1,1 +1,0 @@
-import{j as e,L as t}from"./index-6Ea6de1-.js";const o=()=>e.jsxs("div",{className:"min-h-screen flex items-center justify-center text-sm text-muted-foreground",children:["Case not found."," ",e.jsx(t,{to:"/",className:"text-primary underline ml-2",children:"Go home"})]});export{o as notFoundComponent};
