@@ -7,7 +7,7 @@ import { repoForms, repoCases } from "@/lib/data/repo.server";
  * Cached for 6 hours since URL set only changes when new cases appear.
  */
 const buildSitemap = createServerFn({ method: "GET" }).handler(async () => {
-  const site = process.env.SITE_URL ?? "https://usciscasestatus.fyi";
+  const site = process.env.SITE_URL ?? "https://visacasetimes.com";
   const [forms, cases] = await Promise.all([repoForms(), repoCases()]);
   const today = new Date().toISOString().slice(0, 10);
 

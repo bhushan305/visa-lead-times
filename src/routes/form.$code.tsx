@@ -1,13 +1,85 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { SponsoredSlot } from "@/components/sponsored-slot";
 import { getFormPageBundle } from "@/lib/case.functions";
+
+/** Median of a numeric array. Returns null for empty input. */
+function median(xs: number[]): number | null {
+  if (!xs.length) return null;
+  const sorted = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+/** Format months as "8-12 mo" or "9 mo". */
+function fmtRange(lo: number | null, hi: number | null): string {
+  if (lo == null && hi == null) return "—";
+  if (lo == null || hi == null) return `${(lo ?? hi)!.toFixed(1)} mo`;
+  if (Math.abs(lo - hi) < 0.05) return `${lo.toFixed(1)} mo`;
+  return `${lo.toFixed(1)}–${hi.toFixed(1)} mo`;
+}
+
+type Office = {
+  slug: string;
+  office: string;
+  current_display: string | null;
+  current_lo: number | null;
+  current_hi: number | null;
+};
+type CategoryGroup = {
+  category: string;
+  offices: Office[];
+  // Aggregate stats across all offices in this category
+  medianLo: number | null;
+  medianHi: number | null;
+  minLo: number | null;
+  maxHi: number | null;
+};
 
 export const Route = createFileRoute("/form/$code")({
   loader: async ({ params }) => {
     const bundle = await getFormPageBundle({ data: { slug: params.code } });
     if (!bundle.form) throw notFound();
     const { form, cases, allForms } = bundle;
+
+    // Group cases by category. For forms like N-400 with one category and 80
+    // field offices, this collapses to a single card with a national median
+    // and a per-office drilldown. For forms like I-129 with many distinct
+    // categories at a few service centers, you get one card per category.
+    const byCategory = new Map<string, Office[]>();
+    for (const c of cases) {
+      const offices = byCategory.get(c.category) ?? [];
+      offices.push({
+        slug: c.slug,
+        office: c.office,
+        current_display: c.current_display ?? null,
+        current_lo: c.current_lo ?? null,
+        current_hi: c.current_hi ?? null,
+      });
+      byCategory.set(c.category, offices);
+    }
+
+    const categoryGroups: CategoryGroup[] = [...byCategory.entries()]
+      .map(([category, offices]) => {
+        const los = offices.map((o) => o.current_lo).filter((n): n is number => n != null);
+        const his = offices.map((o) => o.current_hi).filter((n): n is number => n != null);
+        // Sort offices alphabetically for predictable drilldown
+        offices.sort((a, b) => a.office.localeCompare(b.office));
+        return {
+          category,
+          offices,
+          medianLo: median(los),
+          medianHi: median(his),
+          minLo: los.length ? Math.min(...los) : null,
+          maxHi: his.length ? Math.max(...his) : null,
+        };
+      })
+      // Sort categories: most common first, then alphabetical
+      .sort((a, b) => b.offices.length - a.offices.length || a.category.localeCompare(b.category));
+
     return {
       form: {
         code: form.code,
@@ -15,12 +87,7 @@ export const Route = createFileRoute("/form/$code")({
         slug: form.slug,
         count: cases.length,
       },
-      cases: cases.map((c: any) => ({
-        slug: c.slug,
-        category: c.category,
-        office: c.office,
-        current_display: c.current_display ?? null,
-      })),
+      categoryGroups,
       allForms: allForms.map((f: any) => ({
         code: f.code,
         slug: f.slug,
@@ -33,7 +100,7 @@ export const Route = createFileRoute("/form/$code")({
     if (!f) return { meta: [{ title: "Form not found" }] };
     return {
       meta: [
-        { title: `${f.code} Processing Times — ${f.title} | Visa Lead Times` },
+        { title: `${f.code} Processing Times — ${f.title} | Visa Case Times` },
         {
           name: "description",
           content: `Current USCIS processing times for Form ${f.code} (${f.title}). ${f.count} case types tracked across service centers, updated daily.`,
@@ -72,7 +139,7 @@ export const Route = createFileRoute("/form/$code")({
 });
 
 function FormPage() {
-  const { form, cases, allForms } = Route.useLoaderData();
+  const { form, categoryGroups, allForms } = Route.useLoaderData();
 
   // JSON-LD: Dataset schema makes Google understand we're tracking time-series data
   const jsonLd = {
@@ -80,7 +147,7 @@ function FormPage() {
     "@type": "Dataset",
     name: `USCIS Form ${form.code} processing times`,
     description: `Daily-updated processing-time ranges for USCIS Form ${form.code} (${form.title}) across ${form.count} service-center/category combinations.`,
-    creator: { "@type": "Organization", name: "Visa Lead Times" },
+    creator: { "@type": "Organization", name: "Visa Case Times" },
     isBasedOn: "https://egov.uscis.gov/processing-times",
     keywords: [form.code, form.title, "USCIS", "processing times", "immigration"].join(", "),
   };
@@ -106,22 +173,9 @@ function FormPage() {
           </p>
         </header>
 
-        <div className="border rule bg-card divide-y divide-[var(--color-border)]">
-          {cases.map((c) => (
-            <Link
-              key={c.slug}
-              to="/case/$slug"
-              params={{ slug: c.slug }}
-              className="flex items-start sm:items-center flex-col sm:flex-row gap-2 sm:gap-6 px-5 py-4 hover:bg-secondary"
-            >
-              <div className="flex-1">
-                <div className="font-medium text-foreground">{c.category}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{c.office}</div>
-              </div>
-              <div className="num text-primary text-sm whitespace-nowrap">
-                {c.current_display ?? "—"}
-              </div>
-            </Link>
+        <div className="space-y-4">
+          {categoryGroups.map((g) => (
+            <CategoryCard key={g.category} group={g} />
           ))}
         </div>
 
@@ -150,6 +204,87 @@ function FormPage() {
         </div>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function CategoryCard({ group }: { group: CategoryGroup }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasManyOffices = group.offices.length > 1;
+  const nationalRange = fmtRange(group.medianLo, group.medianHi);
+  const spread =
+    group.minLo != null && group.maxHi != null && group.offices.length > 1
+      ? `${group.minLo.toFixed(1)}–${group.maxHi.toFixed(1)} mo across ${group.offices.length} offices`
+      : null;
+
+  // If only one office, link directly — skip the expand affordance.
+  if (!hasManyOffices) {
+    const only = group.offices[0];
+    return (
+      <Link
+        to="/case/$slug"
+        params={{ slug: only.slug }}
+        className="block border rule bg-card px-5 py-4 hover:border-primary"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="font-medium text-foreground">{group.category}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{only.office}</div>
+          </div>
+          <div className="num text-primary text-sm whitespace-nowrap">
+            {only.current_display ?? "—"}
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <div className="border rule bg-card">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-secondary"
+        aria-expanded={expanded}
+      >
+        <div className="flex-1">
+          <div className="font-medium text-foreground">{group.category}</div>
+          {spread && (
+            <div className="text-xs text-muted-foreground mt-0.5">{spread}</div>
+          )}
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            National median
+          </p>
+          <p className="num text-primary text-sm whitespace-nowrap mt-0.5">
+            {nationalRange}
+          </p>
+        </div>
+        <span
+          className="text-muted-foreground text-lg leading-none w-4 text-center"
+          aria-hidden="true"
+        >
+          {expanded ? "−" : "+"}
+        </span>
+      </button>
+      {expanded && (
+        <ul className="border-t rule divide-y divide-[var(--color-border)]">
+          {group.offices.map((o) => (
+            <li key={o.slug}>
+              <Link
+                to="/case/$slug"
+                params={{ slug: o.slug }}
+                className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-secondary"
+              >
+                <span className="text-sm text-foreground">{o.office}</span>
+                <span className="num text-primary text-xs whitespace-nowrap">
+                  {o.current_display ?? "—"}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

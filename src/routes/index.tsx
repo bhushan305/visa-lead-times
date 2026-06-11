@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { SponsoredSlot } from "@/components/sponsored-slot";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
 import { buildSearchGrouped, type CaseSummary, type FormGroup } from "@/lib/processing-times";
@@ -27,7 +26,7 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "USCIS Visa Processing Times — Daily Tracker | Visa Lead Times" },
+      { title: "USCIS Visa Processing Times — Daily Tracker | Visa Case Times" },
       {
         name: "description",
         content:
@@ -185,8 +184,6 @@ function HomePage() {
               </Link>
             ))}
           </div>
-
-          <SponsoredSlot />
 
           {/* High-intent: visitor just browsed cases. Offer pro help if needed. */}
           <LitwinCTA variant="inline" context="home:after-forms" />

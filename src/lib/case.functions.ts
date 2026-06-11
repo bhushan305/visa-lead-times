@@ -108,6 +108,8 @@ export const getFormPageBundle = createServerFn({ method: "GET" })
         category: c.category,
         office: c.office,
         current_display: c.current_display ?? null,
+        current_lo: c.current_lo ?? null,
+        current_hi: c.current_hi ?? null,
       })),
       allForms: allFormsRaw.map((f: any) => ({
         code: f.code,

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/robots.txt")({
   loader: () => {
-    const site = process.env.SITE_URL ?? "https://usciscasestatus.fyi";
+    const site = process.env.SITE_URL ?? "https://visacasetimes.com";
     const body = `User-agent: *
 Allow: /
 Disallow: /api/

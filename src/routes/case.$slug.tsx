@@ -1,7 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { SponsoredSlot } from "@/components/sponsored-slot";
 import { ProcessingTimeChart } from "@/components/processing-time-chart";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { FeedbackForm } from "@/components/feedback-form";
@@ -42,7 +41,7 @@ export const Route = createFileRoute("/case/$slug")({
       ? `USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}: ${s.current_display} as of ${asOf}. Daily-updated chart and historic fiscal-year averages.`
       : `Track USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}. Daily-updated chart with historic averages back to FY2014.`;
 
-    const siteUrl = process.env.SITE_URL ?? "https://usciscasestatus.fyi";
+    const siteUrl = process.env.SITE_URL ?? "https://visacasetimes.com";
     const canonical = `${siteUrl}/case/${params.slug}`;
 
     return {
@@ -160,7 +159,7 @@ function CasePage() {
     "@type": "Dataset",
     name: `USCIS Form ${summary.form_code} ${summary.category} processing time — ${summary.office}`,
     description: tldr,
-    creator: { "@type": "Organization", name: "Visa Lead Times" },
+    creator: { "@type": "Organization", name: "Visa Case Times" },
     isBasedOn: "https://egov.uscis.gov/processing-times",
     dateModified: asOfDate,
     temporalCoverage: "2014-10-01/..",
@@ -182,7 +181,7 @@ function CasePage() {
   };
 
   // BreadcrumbList schema for site hierarchy.
-  const siteUrl = "https://usciscasestatus.fyi";
+  const siteUrl = "https://visacasetimes.com";
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -223,13 +222,25 @@ function CasePage() {
             {summary.form_code} {summary.category}
           </h1>
 
-          <OfficeSwitcher
-            currentSlug={summary.slug}
-            currentOffice={summary.office}
-            siblings={siblings.filter(
-              (s: any) => s.category === summary.category
-            )}
-          />
+          <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 flex-wrap">
+            {/* Office picker: only renders the dropdown when >1 office exists
+                for this category. For "All Field Offices"-only categories
+                (e.g. I-485 Employment-based) it just shows the office label. */}
+            <OfficeSwitcher
+              currentSlug={summary.slug}
+              currentOffice={summary.office}
+              siblings={siblings.filter(
+                (s: any) => s.category === summary.category
+              )}
+            />
+            {/* Category picker: jump to other categories within this form
+                (I-485 Family-based, Asylum, etc.). Useful when the current
+                category has no per-office breakdown to compare across. */}
+            <CategorySwitcher
+              currentCategory={summary.category}
+              siblings={siblings}
+            />
+          </div>
         </header>
 
         <div className="grid lg:grid-cols-[1fr_300px] gap-6">
@@ -265,8 +276,6 @@ function CasePage() {
               </p>
               <p className="text-sm text-foreground leading-relaxed">{tldr}</p>
             </section>
-
-            <SponsoredSlot />
 
             <section className="mt-10 space-y-6">
               <div>
@@ -397,7 +406,6 @@ function CasePage() {
             )}
 
             <LitwinCTA variant="sidebar" context={`case:${summary.form_code}:sidebar`} />
-            <SponsoredSlot variant="sidebar" />
           </div>
         </div>
 
@@ -488,16 +496,24 @@ function OfficeSwitcher({
   siblings: { slug: string; office: string; current_display?: string | null }[];
 }) {
   const navigate = useNavigate();
-  // Single-office case: just show the office name, no picker.
+  // Single-office case: still show the row with the label so it visually pairs
+  // with the Category dropdown next to it.
   if (siblings.length === 0) {
-    return <p className="mt-2 text-base text-muted-foreground">{currentOffice}</p>;
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          Service center
+        </span>
+        <span className="text-sm font-medium text-foreground">{currentOffice}</span>
+      </div>
+    );
   }
   const options = [
     { slug: currentSlug, office: currentOffice },
     ...siblings.filter((s) => s.slug !== currentSlug),
   ];
   return (
-    <div className="mt-2 flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-3">
       <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
         Service center
       </span>
@@ -521,6 +537,68 @@ function OfficeSwitcher({
       <span className="text-xs text-muted-foreground">
         {options.length} office{options.length === 1 ? "" : "s"}
       </span>
+    </div>
+  );
+}
+
+/**
+ * Category switcher — lists distinct categories within this form so users can
+ * jump from e.g. "I-485 Employment-based" to "I-485 Family-based" without
+ * going back to the form page. Navigates to the first office in the chosen
+ * category (alphabetically) — the case page's OfficeSwitcher then lets the
+ * user pick a different office within that category.
+ */
+function CategorySwitcher({
+  currentCategory,
+  siblings,
+}: {
+  currentCategory: string;
+  siblings: { slug: string; category: string; office: string }[];
+}) {
+  const navigate = useNavigate();
+  // Pick one representative slug per category — the first office alphabetically.
+  const byCategory = new Map<string, { slug: string; office: string }>();
+  for (const s of siblings) {
+    const existing = byCategory.get(s.category);
+    if (!existing || s.office.localeCompare(existing.office) < 0) {
+      byCategory.set(s.category, { slug: s.slug, office: s.office });
+    }
+  }
+  // Don't render if there's only one category for this form.
+  if (byCategory.size === 0) return null;
+
+  const otherCategories = [...byCategory.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0])
+  );
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        Category
+      </span>
+      <div className="relative">
+        <select
+          aria-label="Switch case category"
+          value="__current__"
+          onChange={(e) => {
+            const slug = e.target.value;
+            if (slug !== "__current__") {
+              navigate({ to: "/case/$slug", params: { slug } });
+            }
+          }}
+          className="appearance-none bg-card border rule px-3 py-1.5 pr-8 text-sm font-medium text-primary focus:outline-none focus:ring-2 focus:ring-ring/40 cursor-pointer max-w-[280px] truncate"
+        >
+          <option value="__current__">{currentCategory}</option>
+          {otherCategories.map(([category, { slug }]) => (
+            <option key={category} value={slug}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+          ▾
+        </span>
+      </div>
     </div>
   );
 }

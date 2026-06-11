@@ -4,7 +4,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About the Data | Visa Lead Times" },
+      { title: "About the Data | Visa Case Times" },
       {
         name: "description",
         content:

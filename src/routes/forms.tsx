@@ -17,7 +17,7 @@ export const Route = createFileRoute("/forms")({
   },
   head: () => ({
     meta: [
-      { title: "All USCIS Forms We Track | Visa Lead Times" },
+      { title: "All USCIS Forms We Track | Visa Case Times" },
       {
         name: "description",
         content:

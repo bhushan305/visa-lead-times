@@ -79,14 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Visa Lead Times — Daily USCIS Processing Time Tracker" },
+      { title: "Visa Case Times — Daily USCIS Processing Time Tracker" },
       {
         name: "description",
         content:
           "Independent tracker for USCIS processing times. Updated daily across every form and service center, with monthly averages and historic fiscal-year context.",
       },
       { name: "robots", content: "index, follow" },
-      { property: "og:site_name", content: "Visa Lead Times" },
+      { property: "og:site_name", content: "Visa Case Times" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
