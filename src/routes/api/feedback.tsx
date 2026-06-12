@@ -64,6 +64,17 @@ export const submitFeedback = createServerFn({ method: "POST" })
         const text = await res.text();
         return { ok: false, reason: `db-error: ${text.slice(0, 200)}` };
       }
+
+      // Fire-and-forget notification email. Don't fail the user's submission
+      // if email fails — the row is already saved, the email is a nice-to-have.
+      void notifyByEmail({
+        user_name: name,
+        email,
+        message,
+        page_path: data.page_path ?? null,
+        case_slug: data.case_slug ?? null,
+      });
+
       return { ok: true };
     } catch (e: any) {
       return { ok: false, reason: e?.message ?? String(e) };
@@ -73,3 +84,36 @@ export const submitFeedback = createServerFn({ method: "POST" })
 export const Route = createFileRoute("/api/feedback")({
   component: () => null,
 });
+
+/**
+ * Notifies via the existing Apps Script Web App — which uses Google's
+ * built-in MailApp.sendEmail() to send from your Gmail. No new vendor,
+ * no API key, no DNS records.
+ *
+ * Apps Script side: add a `case 'feedback'` branch to your existing
+ * doPost handler. See README / setup notes for the exact GAS code.
+ */
+async function notifyByEmail(p: {
+  user_name: string | null;
+  email: string;
+  message: string;
+  page_path: string | null;
+  case_slug: string | null;
+}) {
+  const url = process.env.APPS_SCRIPT_URL;
+  if (!url) return; // silently skip if not configured
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // `mode: no-cors`-style payload — Apps Script doPost reads e.postData.contents
+      body: JSON.stringify({
+        action: "feedback",
+        feedback: p,
+      }),
+    });
+  } catch {
+    // best-effort — don't crash the request
+  }
+}
