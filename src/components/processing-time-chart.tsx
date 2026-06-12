@@ -140,10 +140,10 @@ function TypedDot(props: any) {
   if (t === "yearly" || t === "ytd")
     return (
       <rect
-        x={cx - 4.5}
-        y={cy - 4.5}
-        width={9}
-        height={9}
+        x={cx - 3}
+        y={cy - 3}
+        width={6}
+        height={6}
         transform={`rotate(45, ${cx}, ${cy})`}
         fill="var(--color-accent)"
       />
