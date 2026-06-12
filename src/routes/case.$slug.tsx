@@ -508,10 +508,14 @@ function OfficeSwitcher({
       </div>
     );
   }
+  // Alphabetical across all offices including the current one — the <select>
+  // highlights the active row in place, so users find what they expect at the
+  // expected position rather than seeing the current office pinned to the top
+  // or bottom of the list.
   const options = [
     { slug: currentSlug, office: currentOffice },
     ...siblings.filter((s) => s.slug !== currentSlug),
-  ];
+  ].sort((a, b) => a.office.localeCompare(b.office));
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
