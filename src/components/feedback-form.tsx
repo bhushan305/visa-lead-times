@@ -60,6 +60,7 @@ function FeedbackFormFields({
           email: email.trim(),
           message: message.trim(),
           user_name: name.trim() || null,
+          host: typeof window !== "undefined" ? window.location.host : null,
           page_path: router.state.location.pathname,
           case_slug: caseSlug ?? null,
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,

@@ -14,6 +14,7 @@ export const submitFeedback = createServerFn({ method: "POST" })
       email: string;
       message: string;
       user_name?: string | null;
+      host?: string | null;
       page_path?: string | null;
       case_slug?: string | null;
       user_agent?: string | null;
@@ -71,6 +72,7 @@ export const submitFeedback = createServerFn({ method: "POST" })
         user_name: name,
         email,
         message,
+        host: data.host ?? null,
         page_path: data.page_path ?? null,
         case_slug: data.case_slug ?? null,
       });
@@ -97,6 +99,7 @@ async function notifyByEmail(p: {
   user_name: string | null;
   email: string;
   message: string;
+  host: string | null;
   page_path: string | null;
   case_slug: string | null;
 }) {
