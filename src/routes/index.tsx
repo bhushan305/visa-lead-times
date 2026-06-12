@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
-import { buildSearchGrouped, type CaseSummary, type FormGroup } from "@/lib/processing-times";
+import { searchWithAlias, type CaseSummary, type FormGroup } from "@/lib/processing-times";
 import { readLastCase } from "@/lib/preferences";
 
 export const Route = createFileRoute("/")({
@@ -65,7 +65,9 @@ function HomePage() {
     setLastCase(readLastCase());
   }, []);
 
-  const results = useMemo(() => buildSearchGrouped(allCases, q), [q, allCases]);
+  const outcome = useMemo(() => searchWithAlias(allCases, q), [q, allCases]);
+  const results = outcome.groups;
+  const matchedAlias = outcome.alias;
   const lastCaseMeta = useMemo(
     () => (lastCase ? allCases.find((c) => c.slug === lastCase) : null),
     [lastCase, allCases]
@@ -113,7 +115,24 @@ function HomePage() {
                 />
               </div>
               {results.length > 0 && (
-                <div className="mt-2 max-w-3xl border rule bg-card divide-y divide-[var(--color-border)]">
+                <div className="mt-2 max-w-3xl border rule bg-card">
+                  {matchedAlias && (
+                    <div className="border-b rule px-5 py-2.5 bg-secondary/50">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Matched visa
+                      </p>
+                      <p className="text-sm text-foreground mt-0.5">
+                        <strong>{matchedAlias.display}</strong>
+                        {matchedAlias.forms.length > 1 && (
+                          <span className="text-muted-foreground">
+                            {" — typically involves "}
+                            {matchedAlias.forms.join(" + ")}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                <div className="divide-y divide-[var(--color-border)]">
                   {results.map((g) => (
                     <Link
                       key={`${g.form}::${g.category}`}
@@ -137,6 +156,7 @@ function HomePage() {
                       </div>
                     </Link>
                   ))}
+                </div>
                 </div>
               )}
             </div>

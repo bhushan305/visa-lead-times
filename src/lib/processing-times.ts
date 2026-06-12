@@ -208,34 +208,17 @@ export function trendDelta(series: SeriesPoint[]): { delta: number; pct: number 
 }
 
 /* ---------- Search ----------
- * Common-term aliases route the user to the form they almost certainly meant,
- * not to a derivative that happens to mention the term in its category text.
- * (e.g. "h1b" should surface I-129 H-1B petitions, not I-765 H-4 spouse EADs.)
+ * Users search by visa names ("E-2", "B1/B2", "EB-2") but the data is keyed
+ * by USCIS form numbers ("I-129", "I-539"). The VISA_ALIASES map in
+ * visa-aliases.ts is the translation layer — it lists every USCIS-trackable
+ * visa with the form(s) that handle it, ordered by relevance.
+ *
+ * Scoring: when a query matches an alias (strict — full normalized query
+ * must equal an alias key), every form in the alias gets boosted, with the
+ * first form scored highest. Subterms narrow matches within a form so
+ * "E-2" surfaces the actual E-2 cases inside I-129, not all I-129.
  */
-const ALIASES: Record<string, { form: string; subterm?: string }> = {
-  h1b:           { form: "I-129", subterm: "h1b" },
-  h1:            { form: "I-129", subterm: "h1" },
-  h2a:           { form: "I-129", subterm: "h2a" },
-  h2b:           { form: "I-129", subterm: "h2b" },
-  l1:            { form: "I-129", subterm: "l" },
-  o1:            { form: "I-129", subterm: "o" },
-  h4:            { form: "I-539", subterm: "h4" },
-  greencard:     { form: "I-485" },
-  gc:            { form: "I-485" },
-  aos:           { form: "I-485" },
-  ead:           { form: "I-765" },
-  workpermit:    { form: "I-765" },
-  ap:            { form: "I-131" },
-  advanceparole: { form: "I-131" },
-  travel:        { form: "I-131" },
-  citizenship:   { form: "N-400" },
-  naturalization:{ form: "N-400" },
-  fiance:        { form: "I-129F" },
-  k1:            { form: "I-129F" },
-  removeconditions: { form: "I-751" },
-  roc:           { form: "I-751" },
-  renewgreencard:{ form: "I-90" },
-};
+import { lookupVisaAlias, normalizeVisa, type VisaAlias } from "./visa-aliases";
 
 export function buildSearch(allCases: CaseSummary[], query: string): CaseSummary[] {
   const raw = query.trim().toLowerCase();
@@ -244,9 +227,20 @@ export function buildSearch(allCases: CaseSummary[], query: string): CaseSummary
   const nTerm = norm(raw);
   if (!nTerm) return [];
 
-  const alias = ALIASES[nTerm];
-  const targetForm = alias ? norm(alias.form) : null;
-  const subterm = alias?.subterm ?? null;
+  const alias = lookupVisaAlias(raw);
+  // Build per-form boost map: first form = strongest, decreasing.
+  const aliasFormBoost = new Map<string, number>(); // norm(form) → score
+  const aliasSubterms = new Map<string, string[]>(); // norm(form) → normalized subterms
+  if (alias) {
+    alias.forms.forEach((f, i) => {
+      aliasFormBoost.set(norm(f), 100 - i * 15); // 100, 85, 70, 55...
+      const subs = alias.subterms?.[f] ?? [];
+      aliasSubterms.set(
+        norm(f),
+        subs.map(normalizeVisa).filter(Boolean)
+      );
+    });
+  }
 
   const scored: { c: CaseSummary; score: number }[] = [];
   for (const c of allCases) {
@@ -257,13 +251,22 @@ export function buildSearch(allCases: CaseSummary[], query: string): CaseSummary
 
     let score = 0;
 
-    // Alias path: the user said "h1b" → strongly prefer cases on that form
-    // whose name/category also matches the sub-term ("h1b" inside I-129).
-    if (targetForm) {
-      if (nForm === targetForm) {
-        score += 80;
-        if (subterm && (nName.includes(subterm) || nCat.includes(subterm))) {
-          score += 40; // exact petition type within the form
+    // Alias path: query matched a visa name → boost every form the alias lists.
+    const boost = aliasFormBoost.get(nForm);
+    if (boost) {
+      score += boost;
+      // If this form has subterms, require one of them to match before granting
+      // the bonus. Stops "E-2" from boosting unrelated I-129 cases like H-1B.
+      const subs = aliasSubterms.get(nForm) ?? [];
+      if (subs.length > 0) {
+        const subHit = subs.some(
+          (s) => nName.includes(s) || nCat.includes(s)
+        );
+        if (subHit) {
+          score += 60; // strong match — exact petition type within the form
+        } else {
+          // Form-only match with no subterm hit; demote so the right ones win
+          score -= 50;
         }
       }
     }
@@ -303,6 +306,23 @@ export type GroupedResult = {
   primarySlug: string; // first office — used as the "open" target
   rangeDisplay: string | null; // representative range (first office) for the row
 };
+
+/**
+ * Search result that also surfaces the matched visa alias (if any) so the UI
+ * can show "Matched visa: E-2 Treaty Investor" above the results.
+ */
+export type SearchOutcome = {
+  alias: VisaAlias | null;
+  groups: GroupedResult[];
+};
+
+/** Convenience wrapper exposing the matched alias alongside grouped results. */
+export function searchWithAlias(allCases: CaseSummary[], query: string): SearchOutcome {
+  return {
+    alias: lookupVisaAlias(query),
+    groups: buildSearchGrouped(allCases, query),
+  };
+}
 
 export function buildSearchGrouped(allCases: CaseSummary[], query: string): GroupedResult[] {
   const hits = buildSearch(allCases, query);

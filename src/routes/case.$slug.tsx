@@ -327,8 +327,8 @@ function CasePage() {
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   The chart combines four data sources, oldest to newest: USCIS-published{" "}
-                  <strong>fiscal-year medians</strong> from FY2014 (when available); a current-FY{" "}
-                  <strong>YTD national median</strong> from USCIS's Historic Processing Times page;{" "}
+                  <strong>fiscal-year averages</strong> from FY2014 (including the current
+                  partial year), drawn from USCIS's Historic Processing Times page;{" "}
                   <strong>weekly averages</strong> computed from our daily snapshots; and{" "}
                   <strong>daily snapshots</strong> for the most recent 30 days. A flat line means the
                   published range was unchanged in our snapshots, not that nothing is happening on

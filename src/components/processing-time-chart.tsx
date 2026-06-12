@@ -15,7 +15,7 @@ import type { SeriesPoint } from "@/lib/processing-times";
 /**
  * Four-tier trend chart:
  *   - yearly  (FY closed)   → small dot, gray
- *   - ytd     (FY current)  → diamond, accent
+ *   - ytd     (FY current)  → diamond (same as yearly — current partial year)
  *   - monthly (avg)         → square, primary muted
  *   - daily   (snapshot)    → connected line with hi/lo band, primary
  *
@@ -123,7 +123,7 @@ export function ProcessingTimeChart({ series }: { series: SeriesPoint[] }) {
         </ResponsiveContainer>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        <strong className="text-foreground">FY bars</strong> are USCIS-published yearly national averages.{" "}
+        <strong className="text-foreground">FY diamonds</strong> are USCIS-published yearly national averages.{" "}
         <strong className="text-foreground">Weekly</strong> points average our daily snapshots.{" "}
         <strong className="text-foreground">Daily</strong> points are individual USCIS snapshots from the last 30 days.
       </p>
@@ -135,40 +135,37 @@ function TypedDot(props: any) {
   const { cx, cy, payload } = props;
   if (cx == null || cy == null) return null;
   const t = (payload as SeriesPoint).type;
-  if (t === "yearly")
-    return <circle cx={cx} cy={cy} r={3} fill="var(--color-muted-foreground)" />;
-  if (t === "ytd")
+  // FY (and current-FY YTD) render as an accent-colored diamond so historic
+  // context reads as a distinct visual class from current-snapshot points.
+  if (t === "yearly" || t === "ytd")
     return (
       <rect
-        x={cx - 4}
-        y={cy - 4}
-        width={8}
-        height={8}
+        x={cx - 4.5}
+        y={cy - 4.5}
+        width={9}
+        height={9}
         transform={`rotate(45, ${cx}, ${cy})`}
         fill="var(--color-accent)"
       />
     );
   if (t === "weekly")
     return (
-      <rect x={cx - 2.5} y={cy - 2.5} width={5} height={5} fill="var(--color-primary)" opacity={0.65} />
+      <rect x={cx - 3} y={cy - 3} width={6} height={6} fill="var(--color-primary)" opacity={0.65} />
     );
-  return <circle cx={cx} cy={cy} r={2.5} fill="var(--color-primary)" />;
+  return <circle cx={cx} cy={cy} r={3} fill="var(--color-primary)" />;
 }
 
 function Legend() {
   return (
     <div className="hidden sm:flex items-center gap-3 text-[11px] text-muted-foreground">
       <span className="flex items-center gap-1.5">
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-muted-foreground" /> FY
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="inline-block w-2.5 h-2.5 bg-accent rotate-45" /> YTD
+        <span className="inline-block w-2.5 h-2.5 bg-accent rotate-45" /> FY
       </span>
       <span className="flex items-center gap-1.5">
         <span className="inline-block w-2.5 h-2.5 bg-primary/65" /> Weekly
       </span>
       <span className="flex items-center gap-1.5">
-        <span className="inline-block w-3 h-0.5 bg-primary" /> Daily
+        <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary" /> Daily
       </span>
     </div>
   );
@@ -182,9 +179,7 @@ function ChartTooltip({ active, payload }: any) {
       ? "Daily snapshot"
       : p.type === "weekly"
         ? "Weekly average"
-        : p.type === "ytd"
-          ? "Fiscal year (YTD)"
-          : "Fiscal year average";
+        : "Fiscal year average";
   return (
     <div className="border rule bg-card px-3 py-2 text-xs shadow-sm">
       <div className="font-medium text-foreground">{p.label}</div>
