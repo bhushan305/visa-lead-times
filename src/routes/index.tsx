@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Daily-updated wait times for every USCIS form and service center. Find your case in seconds.",
+          "Daily-updated wait times for every USCIS form and service center. Your case type in seconds.",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { rel: "canonical", href: "/" } as any,
@@ -101,7 +101,7 @@ function HomePage() {
 
             <div className="mt-10">
               <label className="block text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                Find your case
+                Your case type
               </label>
               <div className="relative">
                 <input

@@ -51,6 +51,7 @@ async function pgrestInsert(
 
 export type PageViewPayload = {
   user_id: string;
+  host?: string | null;
   page_path: string;
   referrer?: string | null;
   session_id?: string | null;
@@ -60,6 +61,7 @@ export type PageViewPayload = {
 
 export type ClickPayload = {
   user_id: string;
+  host?: string | null;
   session_id?: string | null;
   page_path: string;
   element_type: string;
@@ -82,6 +84,7 @@ export async function recordPageView(p: PageViewPayload) {
   const result = await pgrestInsert("page_views", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
+    host: clamp(p.host ?? null, 120),
     page_path: clamp(p.page_path, 512),
     referrer: clamp(p.referrer ?? null, 1024),
     user_agent: clamp(p.user_agent ?? null, 512),
@@ -95,6 +98,7 @@ export async function recordClick(p: ClickPayload) {
   return pgrestInsert("click_events", {
     user_id: clamp(p.user_id, 64),
     session_id: clamp(p.session_id ?? null, 64),
+    host: clamp(p.host ?? null, 120),
     page_path: clamp(p.page_path, 512),
     element_type: p.element_type,
     element_label: clamp(p.element_label, MAX_LABEL),

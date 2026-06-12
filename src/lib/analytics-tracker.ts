@@ -14,6 +14,7 @@ type Event =
   | {
       kind: "pageview";
       user_id: string;
+      host: string;
       page_path: string;
       referrer: string | null;
       session_id: string;
@@ -23,6 +24,7 @@ type Event =
   | {
       kind: "click";
       user_id: string;
+      host: string;
       page_path: string;
       element_type: string;
       element_label: string | null;
@@ -125,6 +127,7 @@ export function trackPageView(page_path: string) {
   BUFFER.push({
     kind: "pageview",
     user_id: getUserId(),
+    host: window.location.host, // splits traffic by domain (visacasetimes.com vs usciscasetimes.com)
     page_path,
     referrer: document.referrer || null,
     session_id: getSessionId(),
@@ -149,6 +152,7 @@ export function trackClick(el: Element, page_path: string) {
   BUFFER.push({
     kind: "click",
     user_id: getUserId(),
+    host: window.location.host,
     page_path,
     element_type: tag,
     element_label: label,
