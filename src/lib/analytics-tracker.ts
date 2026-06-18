@@ -35,6 +35,18 @@ type Event =
       target_kind: string | null;
       data_attrs: Record<string, string> | null;
       session_id: string;
+    }
+  | {
+      kind: "search";
+      user_id: string;
+      session_id: string;
+      host: string;
+      page_path: string;
+      query: string;
+      normalized_query: string | null;
+      matched_alias: string | null;
+      results_count: number | null;
+      user_agent: string;
     };
 
 const SESSION_KEY = "vlt_session";
@@ -133,6 +145,35 @@ export function trackPageView(page_path: string) {
     session_id: getSessionId(),
     user_agent: navigator.userAgent,
     load_ms: performance.now() | 0,
+  });
+  schedule();
+}
+
+/**
+ * Record a search the user performed. Call this from a debounced effect so
+ * we don't spam events per keystroke. Pass the matched alias name (if any)
+ * and the number of grouped results so SQL can compute zero-result rates
+ * without reconstructing the search engine server-side.
+ */
+export function trackSearch(p: {
+  query: string;
+  normalized_query: string | null;
+  matched_alias: string | null;
+  results_count: number | null;
+  page_path: string;
+}) {
+  if (typeof window === "undefined") return;
+  BUFFER.push({
+    kind: "search",
+    user_id: getUserId(),
+    session_id: getSessionId(),
+    host: window.location.host,
+    page_path: p.page_path,
+    query: p.query,
+    normalized_query: p.normalized_query,
+    matched_alias: p.matched_alias,
+    results_count: p.results_count,
+    user_agent: navigator.userAgent,
   });
   schedule();
 }

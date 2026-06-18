@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { recordPageView, recordClick } from "@/lib/analytics.server";
+import { recordPageView, recordClick, recordSearch } from "@/lib/analytics.server";
 
 /**
  * Tracking endpoint. Accepts a batched payload of events the client collected
@@ -14,6 +14,7 @@ export const trackBatch = createServerFn({ method: "POST" })
       data.events.map((e) => {
         if (e.kind === "pageview") return recordPageView(e);
         if (e.kind === "click") return recordClick(e);
+        if (e.kind === "search") return recordSearch(e);
         return Promise.resolve({ ok: false, reason: "unknown-kind" });
       })
     );

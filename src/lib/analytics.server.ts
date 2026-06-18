@@ -110,3 +110,34 @@ export async function recordClick(p: ClickPayload) {
     data_attrs: p.data_attrs ?? null,
   });
 }
+
+export type SearchPayload = {
+  user_id: string;
+  session_id?: string | null;
+  host?: string | null;
+  page_path: string;
+  query: string;
+  normalized_query?: string | null;
+  matched_alias?: string | null;
+  results_count?: number | null;
+  user_agent?: string | null;
+};
+
+export async function recordSearch(p: SearchPayload) {
+  if (!p.user_id) return { ok: false, reason: "no-user-id" as const };
+  const q = String(p.query ?? "").trim();
+  if (q.length < 1 || q.length > 200) {
+    return { ok: false, reason: "invalid-query" as const };
+  }
+  return pgrestInsert("search_queries", {
+    user_id: clamp(p.user_id, 64),
+    session_id: clamp(p.session_id ?? null, 64),
+    host: clamp(p.host ?? null, 120),
+    page_path: clamp(p.page_path, 512),
+    query: q,
+    normalized_query: clamp(p.normalized_query ?? null, 120),
+    matched_alias: clamp(p.matched_alias ?? null, 200),
+    results_count: p.results_count ?? null,
+    user_agent: clamp(p.user_agent ?? null, 512),
+  });
+}

@@ -4,6 +4,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
 import { searchWithAlias, type CaseSummary, type FormGroup } from "@/lib/processing-times";
+import { trackSearch } from "@/lib/analytics-tracker";
 import { readLastCase } from "@/lib/preferences";
 
 export const Route = createFileRoute("/")({
@@ -68,6 +69,25 @@ function HomePage() {
   const outcome = useMemo(() => searchWithAlias(allCases, q), [q, allCases]);
   const results = outcome.groups;
   const matchedAlias = outcome.alias;
+
+  // Debounced search tracking. After the user pauses typing for 400ms we log
+  // ONE event: the query, whether it matched a visa alias, and how many
+  // results we showed. Joins to clicks via user_id so we can compute
+  // search → click conversion.
+  useEffect(() => {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    const timer = setTimeout(() => {
+      trackSearch({
+        query: trimmed,
+        normalized_query: trimmed.toLowerCase().replace(/[^a-z0-9]/g, ""),
+        matched_alias: matchedAlias?.display ?? null,
+        results_count: results.length,
+        page_path: typeof window !== "undefined" ? window.location.pathname : "/",
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [q, matchedAlias?.display, results.length]);
   const lastCaseMeta = useMemo(
     () => (lastCase ? allCases.find((c) => c.slug === lastCase) : null),
     [lastCase, allCases]
