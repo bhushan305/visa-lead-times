@@ -4,6 +4,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { ProcessingTimeChart } from "@/components/processing-time-chart";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { FeedbackForm } from "@/components/feedback-form";
+import { AdSlot } from "@/components/ad-slot";
 import { buildSeries, formatMonths, trendDelta } from "@/lib/processing-times";
 import { getCasePageBundle } from "@/lib/case.functions";
 import { rememberLastCase } from "@/lib/preferences";
@@ -277,6 +278,9 @@ function CasePage() {
               <p className="text-sm text-foreground leading-relaxed">{tldr}</p>
             </section>
 
+            {/* High-engagement ad slot — user has just consumed the chart + TLDR. */}
+            <AdSlot id="case-inline" format="in-content" context={`case:${summary.form_code}`} />
+
             <section className="mt-10 space-y-6">
               <div>
                 <h2 className="display text-2xl text-primary border-b rule pb-3 mb-3">
@@ -406,6 +410,7 @@ function CasePage() {
             )}
 
             <LitwinCTA variant="sidebar" context={`case:${summary.form_code}:sidebar`} />
+            <AdSlot id="case-sidebar" format="sidebar" context={`case:${summary.form_code}`} />
           </div>
         </div>
 

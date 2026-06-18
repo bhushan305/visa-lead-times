@@ -93,6 +93,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+      // Pre-connect to AdSense so the script loads faster once the tag fires.
+      { rel: "preconnect", href: "https://pagead2.googlesyndication.com", crossOrigin: "" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif&display=swap",
@@ -100,6 +102,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      // Google AdSense. Account ca-pub-2935901629293366.
+      // While the account is pending approval this just loads the SDK; ads
+      // start filling once Google's automated review passes.
+      {
+        async: true,
+        src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2935901629293366",
+        crossOrigin: "anonymous",
       },
     ],
   }),
