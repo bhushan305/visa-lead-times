@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { SponsoredSlot } from "@/components/sponsored-slot";
+import { AdSlot } from "@/components/ad-slot";
 import { getFormPageBundle } from "@/lib/case.functions";
 
 /** Median of a numeric array. Returns null for empty input. */
@@ -180,6 +181,8 @@ function FormPage() {
         </div>
 
         <SponsoredSlot />
+
+        <AdSlot id="form-leaderboard" format="leaderboard" context={`form:${form.code}`} />
 
         <div className="mt-12">
           <h2 className="display text-2xl text-primary border-b rule pb-3 mb-6">

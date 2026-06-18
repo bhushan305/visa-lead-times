@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { LitwinCTA } from "@/components/litwin-cta";
+import { AdSlot } from "@/components/ad-slot";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
 import { searchWithAlias, type CaseSummary, type FormGroup } from "@/lib/processing-times";
 import { trackSearch } from "@/lib/analytics-tracker";
@@ -230,6 +231,8 @@ function HomePage() {
 
           {/* High-intent: visitor just browsed cases. Offer pro help if needed. */}
           <LitwinCTA variant="inline" context="home:after-forms" />
+
+          <AdSlot id="home-leaderboard" format="leaderboard" context="home" />
 
           <div className="flex items-baseline justify-between border-b rule pb-4 mb-8 mt-16">
             <h2 className="display text-3xl text-primary">Why this exists</h2>
