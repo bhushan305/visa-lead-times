@@ -113,7 +113,17 @@ export function AdSlot({ id, format, slot, context }: Props) {
     );
   }
 
-  // PLACEHOLDER mode — visible design while AdSense is in review
+  // PLACEHOLDER mode — only visible on localhost or when explicitly enabled
+  // via a query param (?showAds=1). Real visitors see nothing rather than a
+  // "coming soon" panel that looks broken. Auto-ads (enabled in the AdSense
+  // dashboard) will fill the page automatically once review completes; manual
+  // slot IDs go in `slot` prop later for hand-picked positions.
+  const isDevView =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.search.includes("showAds=1"));
+  if (!isDevView) return null;
+
   return (
     <div
       data-ad-id={id}
@@ -130,11 +140,8 @@ export function AdSlot({ id, format, slot, context }: Props) {
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         {spec.label}
       </p>
-      <p className="display text-base text-primary mt-2">Ad placement</p>
+      <p className="display text-base text-primary mt-2">Ad placement (dev)</p>
       <p className="text-xs text-muted-foreground mt-1 max-w-xs">{spec.hint}</p>
-      <p className="text-[10px] text-muted-foreground/70 mt-2">
-        Goes live once Google AdSense review completes (~1–2 weeks)
-      </p>
     </div>
   );
 }
