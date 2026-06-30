@@ -48,7 +48,21 @@ async function main() {
   const urls: { loc: string; priority: number; changefreq: string }[] = [
     { loc: `${SITE_URL}/`, priority: 1.0, changefreq: "daily" },
     { loc: `${SITE_URL}/forms`, priority: 0.9, changefreq: "weekly" },
-    { loc: `${SITE_URL}/about`, priority: 0.4, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides`, priority: 0.9, changefreq: "weekly" },
+    { loc: `${SITE_URL}/about`, priority: 0.5, changefreq: "monthly" },
+    { loc: `${SITE_URL}/methodology`, priority: 0.5, changefreq: "monthly" },
+    { loc: `${SITE_URL}/privacy`, priority: 0.3, changefreq: "yearly" },
+    { loc: `${SITE_URL}/terms`, priority: 0.3, changefreq: "yearly" },
+    // Guides — high SEO value, original long-form content
+    { loc: `${SITE_URL}/guides/uscis-processing-times-explained`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/what-to-do-if-case-delayed`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/case-status-vs-processing-times`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/filing-checklist`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/eb-2-vs-eb-3`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/h-1b-processing-times`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/i-485-processing-times`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/i-130-family-petition-times`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/n-400-naturalization-times`, priority: 0.8, changefreq: "monthly" },
   ];
 
   const forms = await pgrest("forms", "select=slug");

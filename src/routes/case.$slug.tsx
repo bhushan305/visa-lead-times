@@ -5,6 +5,7 @@ import { ProcessingTimeChart } from "@/components/processing-time-chart";
 import { LitwinCTA } from "@/components/litwin-cta";
 import { FeedbackForm } from "@/components/feedback-form";
 import { AdSlot } from "@/components/ad-slot";
+import { CaseFAQ } from "@/components/case-faq";
 import { buildSeries, formatMonths, trendDelta } from "@/lib/processing-times";
 import { getCasePageBundle } from "@/lib/case.functions";
 import { rememberLastCase } from "@/lib/preferences";
@@ -369,6 +370,13 @@ function CasePage() {
                 </p>
               </div>
             </section>
+
+            {/* Visa-specific FAQ — substantial editorial content per case page */}
+            <CaseFAQ
+              form_code={summary.form_code}
+              category={summary.category}
+              formCode={summary.form_code}
+            />
           </div>
 
           <div className="space-y-6">
