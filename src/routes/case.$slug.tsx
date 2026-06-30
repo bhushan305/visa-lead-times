@@ -6,6 +6,7 @@ import { LitwinCTA } from "@/components/litwin-cta";
 import { FeedbackForm } from "@/components/feedback-form";
 import { AdSlot } from "@/components/ad-slot";
 import { CaseFAQ } from "@/components/case-faq";
+import { getGuidesForForm } from "@/lib/guide-links";
 import { buildSeries, formatMonths, trendDelta } from "@/lib/processing-times";
 import { getCasePageBundle } from "@/lib/case.functions";
 import { rememberLastCase } from "@/lib/preferences";
@@ -377,6 +378,10 @@ function CasePage() {
               category={summary.category}
               formCode={summary.form_code}
             />
+
+            {/* Internal links to the most-relevant long-form guides for this form.
+                Helps users dive deeper and gives Google strong topical-cluster signals. */}
+            <CaseGuideLinks form_code={summary.form_code} />
           </div>
 
           <div className="space-y-6">
@@ -432,6 +437,42 @@ function CasePage() {
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+/**
+ * "Helpful guides" callout at the bottom of every case page. Surfaces the
+ * most-relevant long-form guides for this case's form (e.g., N-400 case →
+ * naturalization guide + delayed-case guide + processing-times explainer).
+ * Pure internal linking — drives both SEO and user research depth.
+ */
+function CaseGuideLinks({ form_code }: { form_code: string }) {
+  const guides = getGuidesForForm(form_code);
+  if (!guides.length) return null;
+  return (
+    <section className="mt-10" aria-labelledby="case-guides-heading">
+      <h2
+        id="case-guides-heading"
+        className="display text-2xl text-primary border-b rule pb-3 mb-4"
+      >
+        Helpful guides
+      </h2>
+      <ul className="space-y-2">
+        {guides.map((g) => (
+          <li key={g.slug}>
+            <a
+              href={`/guides/${g.slug}`}
+              className="block border rule bg-card px-4 py-3 hover:border-primary transition-colors"
+            >
+              <span className="text-sm font-medium text-foreground">{g.title}</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                Read the guide →
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

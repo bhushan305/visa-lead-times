@@ -234,6 +234,35 @@ function HomePage() {
 
           <AdSlot id="home-leaderboard" format="leaderboard" context="home" />
 
+          {/* Surface long-form guides — they're the most-shareable and
+              highest-SEO-value pages on the site. Linking them from the
+              home page (highest authority page) gives them a strong boost. */}
+          <div className="flex items-baseline justify-between border-b rule pb-4 mb-6 mt-16">
+            <h2 className="display text-3xl text-primary">Popular guides</h2>
+            <a href="/guides" className="text-xs text-accent hover:underline whitespace-nowrap">
+              All guides →
+            </a>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--color-border)] border rule mb-16">
+            {[
+              { slug: "uscis-processing-times-explained", title: "How USCIS processing times work", desc: "What the published range actually means and how to read it" },
+              { slug: "what-to-do-if-case-delayed", title: "What to do if your case is delayed", desc: "Service requests, inquiries, mandamus — the full set of remedies" },
+              { slug: "eb-2-vs-eb-3", title: "EB-2 vs EB-3 — which is faster?", desc: "Side-by-side employment green card comparison" },
+              { slug: "h-1b-processing-times", title: "H-1B processing times in 2026", desc: "Cap, change of status, transfer, extension" },
+              { slug: "i-485-processing-times", title: "I-485 adjustment of status", desc: "Timelines by category, interview, EAD/AP, RFEs" },
+              { slug: "n-400-naturalization-times", title: "N-400 naturalization", desc: "Eligibility, tests, interview, oath ceremony" },
+            ].map((g) => (
+              <a
+                key={g.slug}
+                href={`/guides/${g.slug}`}
+                className="bg-card p-5 hover:bg-secondary transition-colors"
+              >
+                <p className="display text-base text-primary leading-snug">{g.title}</p>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{g.desc}</p>
+              </a>
+            ))}
+          </div>
+
           <div className="flex items-baseline justify-between border-b rule pb-4 mb-8 mt-16">
             <h2 className="display text-3xl text-primary">Why this exists</h2>
           </div>

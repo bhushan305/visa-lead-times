@@ -4,6 +4,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { SponsoredSlot } from "@/components/sponsored-slot";
 import { AdSlot } from "@/components/ad-slot";
 import { getFormPageBundle } from "@/lib/case.functions";
+import { getPrimaryGuideForForm } from "@/lib/guide-links";
 
 /** Median of a numeric array. Returns null for empty input. */
 function median(xs: number[]): number | null {
@@ -173,6 +174,28 @@ function FormPage() {
             {form.count} case {form.count === 1 ? "type" : "types"} tracked
           </p>
         </header>
+
+        {/* Surface the matching long-form guide if we have one. Prominent above
+            the case list because most visitors land here looking for context
+            before clicking into a specific office. */}
+        {(() => {
+          const guide = getPrimaryGuideForForm(form.code);
+          if (!guide) return null;
+          return (
+            <a
+              href={`/guides/${guide.slug}`}
+              className="block mb-6 border-l-4 border-accent bg-card px-5 py-4 hover:bg-secondary transition-colors"
+            >
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                Guide
+              </p>
+              <p className="text-sm text-foreground mt-1">
+                <strong>{guide.title}</strong>
+                <span className="text-muted-foreground"> — read the full guide →</span>
+              </p>
+            </a>
+          );
+        })()}
 
         <div className="space-y-4">
           {categoryGroups.map((g) => (
