@@ -14,7 +14,9 @@
     "sync": "tsx --env-file=.env.local scripts/sync-sheet-to-supabase.ts",
     "sync:ci": "tsx scripts/sync-sheet-to-supabase.ts",
     "seed:historic": "tsx --env-file=.env.local scripts/seed-historic.ts",
-    "seed:historic:ci": "tsx scripts/seed-historic.ts"
+    "seed:historic:ci": "tsx scripts/seed-historic.ts",
+    "setup": "bash scripts/setup-mac.sh",
+    "env:pull": "npx --yes vercel link --yes --scope bhushan-projects --project visa-lead-times-v2 && npx --yes vercel env pull .env.local --environment=production --yes"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
