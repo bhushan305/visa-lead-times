@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/guides/uscis-processing-times-explained")({
   head: () => ({
@@ -23,11 +24,8 @@ export const Route = createFileRoute("/guides/uscis-processing-times-explained")
       },
       { property: "og:type", content: "article" },
       { property: "article:published_time", content: "2026-06-19" },
-      {
-        rel: "canonical",
-        href: "https://visacasetimes.com/guides/uscis-processing-times-explained",
-      } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/guides/uscis-processing-times-explained") }],
   }),
   component: GuidePage,
 });

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/terms")({
         content:
           "Terms of use for Visa Case Times. Information is provided for general guidance and is not legal advice.",
       },
-      { rel: "canonical", href: "https://visacasetimes.com/terms" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/terms") }],
   }),
   component: TermsPage,
 });
@@ -140,8 +141,7 @@ function TermsPage() {
 
             <h2 className="display text-2xl text-primary mt-10 mb-3">11. Contact</h2>
             <p className="text-base text-foreground leading-relaxed mb-4">
-              Questions: via the Feedback widget on any page, or
-              email <strong>hello@visacasetimes.com</strong>.
+              Questions: via the Feedback widget on any page.
             </p>
 
             <p className="text-xs text-muted-foreground mt-10 pt-6 border-t rule">

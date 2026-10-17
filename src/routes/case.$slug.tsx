@@ -10,6 +10,7 @@ import { getGuidesForForm } from "@/lib/guide-links";
 import { buildSeries, formatMonths, trendDelta } from "@/lib/processing-times";
 import { getCasePageBundle } from "@/lib/case.functions";
 import { rememberLastCase } from "@/lib/preferences";
+import { SITE_URL, canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/case/$slug")({
   // Single round-trip bundle so cold loads aren't bottlenecked by serial
@@ -44,8 +45,7 @@ export const Route = createFileRoute("/case/$slug")({
       ? `USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}: ${s.current_display} as of ${asOf}. Daily-updated chart and historic fiscal-year averages.`
       : `Track USCIS processing time for Form ${s.form_code} — ${s.category} at ${s.office}. Daily-updated chart with historic averages back to FY2014.`;
 
-    const siteUrl = process.env.SITE_URL ?? "https://visacasetimes.com";
-    const canonical = `${siteUrl}/case/${params.slug}`;
+    const canonical = canonicalUrl(`/case/${params.slug}`);
 
     return {
       meta: [
@@ -60,8 +60,8 @@ export const Route = createFileRoute("/case/$slug")({
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: `${s.form_code} processing time` },
         { name: "twitter:description", content: desc },
-        { rel: "canonical", href: canonical } as any,
       ],
+      links: [{ rel: "canonical", href: canonical }],
     };
   },
   component: CasePage,
@@ -184,7 +184,7 @@ function CasePage() {
   };
 
   // BreadcrumbList schema for site hierarchy.
-  const siteUrl = "https://visacasetimes.com";
+  const siteUrl = SITE_URL;
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

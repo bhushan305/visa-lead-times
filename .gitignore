@@ -21,6 +21,9 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Generated at build time by scripts/generate-sitemap.ts (prebuild)
+public/sitemap.xml
+
 # Source archive (not part of the repo)
 Visa Track.zip
 

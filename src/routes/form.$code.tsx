@@ -5,6 +5,7 @@ import { SponsoredSlot } from "@/components/sponsored-slot";
 import { AdSlot } from "@/components/ad-slot";
 import { getFormPageBundle } from "@/lib/case.functions";
 import { getPrimaryGuideForForm } from "@/lib/guide-links";
+import { canonicalUrl } from "@/lib/site";
 
 /** Median of a numeric array. Returns null for empty input. */
 function median(xs: number[]): number | null {
@@ -109,8 +110,8 @@ export const Route = createFileRoute("/form/$code")({
         },
         { property: "og:title", content: `${f.code} processing times` },
         { property: "og:description", content: f.title },
-        { rel: "canonical", href: `/form/${params.code}` } as any,
       ],
+      links: [{ rel: "canonical", href: canonicalUrl(`/form/${params.code}`) }],
     };
   },
   component: FormPage,

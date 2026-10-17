@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/guides/filing-checklist")({
   head: () => ({
@@ -23,11 +24,8 @@ export const Route = createFileRoute("/guides/filing-checklist")({
       },
       { property: "og:type", content: "article" },
       { property: "article:published_time", content: "2026-06-19" },
-      {
-        rel: "canonical",
-        href: "https://visacasetimes.com/guides/filing-checklist",
-      } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/guides/filing-checklist") }],
   }),
   component: GuidePage,
 });

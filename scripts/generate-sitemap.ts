@@ -12,7 +12,9 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const SITE_URL = process.env.SITE_URL ?? "https://visacasetimes.com";
+// Canonical origin is shared with the route <link rel="canonical"> tags.
+// Deliberately NOT read from process.env.SITE_URL (see src/lib/site.ts).
+import { SITE_URL } from "../src/lib/site";
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL ??

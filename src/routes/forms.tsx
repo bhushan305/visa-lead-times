@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { getAllForms, getAllCases } from "@/lib/case.functions";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/forms")({
   loader: async () => {
@@ -23,8 +24,8 @@ export const Route = createFileRoute("/forms")({
         content:
           "Browse every USCIS form we track for processing times — I-130, I-485, I-765, I-129, N-400 and many more.",
       },
-      { rel: "canonical", href: "/forms" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/forms") }],
   }),
   component: FormsIndex,
 });

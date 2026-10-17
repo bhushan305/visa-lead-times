@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/privacy")({
         content:
           "How Visa Case Times collects, uses, and protects visitor data. Plain-English explanation of our analytics, feedback, and advertising practices.",
       },
-      { rel: "canonical", href: "https://visacasetimes.com/privacy" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/privacy") }],
   }),
   component: PrivacyPage,
 });
@@ -139,7 +140,7 @@ function PrivacyPage() {
               <li><strong>Opt-out of personalized ads:</strong> Use the links in the "Through advertising partners" section above.</li>
             </ul>
             <p className="text-base text-foreground leading-relaxed mb-4">
-              To exercise any of these rights, send a request via the Feedback widget (bottom-left of any page) or email us at <strong>privacy@visacasetimes.com</strong>.
+              To exercise any of these rights, send a request via the Feedback widget (bottom-left of any page).
             </p>
 
             <h2 className="display text-2xl text-primary mt-10 mb-3">Children</h2>
@@ -158,8 +159,7 @@ function PrivacyPage() {
 
             <h2 className="display text-2xl text-primary mt-10 mb-3">Contact</h2>
             <p className="text-base text-foreground leading-relaxed mb-4">
-              Questions about this policy or our data practices: <strong>privacy@visacasetimes.com</strong>
-              {" "}or via the Feedback widget on any page.
+              Questions about this policy or our data practices: use the Feedback widget on any page.
             </p>
 
             <p className="text-xs text-muted-foreground mt-10 pt-6 border-t rule">

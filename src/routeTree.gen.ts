@@ -9,25 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MethodologyRouteImport } from './routes/methodology'
 import { Route as FormsRouteImport } from './routes/forms'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
+import { Route as GuidesWhatToDoIfCaseDelayedRouteImport } from './routes/guides/what-to-do-if-case-delayed'
+import { Route as GuidesUscisProcessingTimesExplainedRouteImport } from './routes/guides/uscis-processing-times-explained'
+import { Route as GuidesN400NaturalizationTimesRouteImport } from './routes/guides/n-400-naturalization-times'
+import { Route as GuidesI485ProcessingTimesRouteImport } from './routes/guides/i-485-processing-times'
+import { Route as GuidesI130FamilyPetitionTimesRouteImport } from './routes/guides/i-130-family-petition-times'
+import { Route as GuidesH1bProcessingTimesRouteImport } from './routes/guides/h-1b-processing-times'
+import { Route as GuidesFilingChecklistRouteImport } from './routes/guides/filing-checklist'
+import { Route as GuidesEb2VsEb3RouteImport } from './routes/guides/eb-2-vs-eb-3'
+import { Route as GuidesCaseStatusVsProcessingTimesRouteImport } from './routes/guides/case-status-vs-processing-times'
 import { Route as FormCodeRouteImport } from './routes/form.$code'
 import { Route as CaseSlugRouteImport } from './routes/case.$slug'
 import { Route as ApiTrackRouteImport } from './routes/api/track'
 import { Route as ApiFeedbackRouteImport } from './routes/api/feedback'
 import { Route as ApiCronSyncRouteImport } from './routes/api/cron/sync'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MethodologyRoute = MethodologyRouteImport.update({
+  id: '/methodology',
+  path: '/methodology',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FormsRoute = FormsRouteImport.update({
@@ -45,6 +61,63 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesWhatToDoIfCaseDelayedRoute =
+  GuidesWhatToDoIfCaseDelayedRouteImport.update({
+    id: '/guides/what-to-do-if-case-delayed',
+    path: '/guides/what-to-do-if-case-delayed',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesUscisProcessingTimesExplainedRoute =
+  GuidesUscisProcessingTimesExplainedRouteImport.update({
+    id: '/guides/uscis-processing-times-explained',
+    path: '/guides/uscis-processing-times-explained',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesN400NaturalizationTimesRoute =
+  GuidesN400NaturalizationTimesRouteImport.update({
+    id: '/guides/n-400-naturalization-times',
+    path: '/guides/n-400-naturalization-times',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesI485ProcessingTimesRoute =
+  GuidesI485ProcessingTimesRouteImport.update({
+    id: '/guides/i-485-processing-times',
+    path: '/guides/i-485-processing-times',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesI130FamilyPetitionTimesRoute =
+  GuidesI130FamilyPetitionTimesRouteImport.update({
+    id: '/guides/i-130-family-petition-times',
+    path: '/guides/i-130-family-petition-times',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesH1bProcessingTimesRoute =
+  GuidesH1bProcessingTimesRouteImport.update({
+    id: '/guides/h-1b-processing-times',
+    path: '/guides/h-1b-processing-times',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GuidesFilingChecklistRoute = GuidesFilingChecklistRouteImport.update({
+  id: '/guides/filing-checklist',
+  path: '/guides/filing-checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesEb2VsEb3Route = GuidesEb2VsEb3RouteImport.update({
+  id: '/guides/eb-2-vs-eb-3',
+  path: '/guides/eb-2-vs-eb-3',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesCaseStatusVsProcessingTimesRoute =
+  GuidesCaseStatusVsProcessingTimesRouteImport.update({
+    id: '/guides/case-status-vs-processing-times',
+    path: '/guides/case-status-vs-processing-times',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const FormCodeRoute = FormCodeRouteImport.update({
   id: '/form/$code',
   path: '/form/$code',
@@ -75,24 +148,46 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/forms': typeof FormsRoute
-  '/robots.txt': typeof RobotsDottxtRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/methodology': typeof MethodologyRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/feedback': typeof ApiFeedbackRoute
   '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
+  '/guides/case-status-vs-processing-times': typeof GuidesCaseStatusVsProcessingTimesRoute
+  '/guides/eb-2-vs-eb-3': typeof GuidesEb2VsEb3Route
+  '/guides/filing-checklist': typeof GuidesFilingChecklistRoute
+  '/guides/h-1b-processing-times': typeof GuidesH1bProcessingTimesRoute
+  '/guides/i-130-family-petition-times': typeof GuidesI130FamilyPetitionTimesRoute
+  '/guides/i-485-processing-times': typeof GuidesI485ProcessingTimesRoute
+  '/guides/n-400-naturalization-times': typeof GuidesN400NaturalizationTimesRoute
+  '/guides/uscis-processing-times-explained': typeof GuidesUscisProcessingTimesExplainedRoute
+  '/guides/what-to-do-if-case-delayed': typeof GuidesWhatToDoIfCaseDelayedRoute
+  '/guides/': typeof GuidesIndexRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/forms': typeof FormsRoute
-  '/robots.txt': typeof RobotsDottxtRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/methodology': typeof MethodologyRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/feedback': typeof ApiFeedbackRoute
   '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
+  '/guides/case-status-vs-processing-times': typeof GuidesCaseStatusVsProcessingTimesRoute
+  '/guides/eb-2-vs-eb-3': typeof GuidesEb2VsEb3Route
+  '/guides/filing-checklist': typeof GuidesFilingChecklistRoute
+  '/guides/h-1b-processing-times': typeof GuidesH1bProcessingTimesRoute
+  '/guides/i-130-family-petition-times': typeof GuidesI130FamilyPetitionTimesRoute
+  '/guides/i-485-processing-times': typeof GuidesI485ProcessingTimesRoute
+  '/guides/n-400-naturalization-times': typeof GuidesN400NaturalizationTimesRoute
+  '/guides/uscis-processing-times-explained': typeof GuidesUscisProcessingTimesExplainedRoute
+  '/guides/what-to-do-if-case-delayed': typeof GuidesWhatToDoIfCaseDelayedRoute
+  '/guides': typeof GuidesIndexRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRoutesById {
@@ -100,12 +195,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/forms': typeof FormsRoute
-  '/robots.txt': typeof RobotsDottxtRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/methodology': typeof MethodologyRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/api/feedback': typeof ApiFeedbackRoute
   '/api/track': typeof ApiTrackRoute
   '/case/$slug': typeof CaseSlugRoute
   '/form/$code': typeof FormCodeRoute
+  '/guides/case-status-vs-processing-times': typeof GuidesCaseStatusVsProcessingTimesRoute
+  '/guides/eb-2-vs-eb-3': typeof GuidesEb2VsEb3Route
+  '/guides/filing-checklist': typeof GuidesFilingChecklistRoute
+  '/guides/h-1b-processing-times': typeof GuidesH1bProcessingTimesRoute
+  '/guides/i-130-family-petition-times': typeof GuidesI130FamilyPetitionTimesRoute
+  '/guides/i-485-processing-times': typeof GuidesI485ProcessingTimesRoute
+  '/guides/n-400-naturalization-times': typeof GuidesN400NaturalizationTimesRoute
+  '/guides/uscis-processing-times-explained': typeof GuidesUscisProcessingTimesExplainedRoute
+  '/guides/what-to-do-if-case-delayed': typeof GuidesWhatToDoIfCaseDelayedRoute
+  '/guides/': typeof GuidesIndexRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRouteTypes {
@@ -114,36 +220,69 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/forms'
-    | '/robots.txt'
-    | '/sitemap.xml'
+    | '/methodology'
+    | '/privacy'
+    | '/terms'
     | '/api/feedback'
     | '/api/track'
     | '/case/$slug'
     | '/form/$code'
+    | '/guides/case-status-vs-processing-times'
+    | '/guides/eb-2-vs-eb-3'
+    | '/guides/filing-checklist'
+    | '/guides/h-1b-processing-times'
+    | '/guides/i-130-family-petition-times'
+    | '/guides/i-485-processing-times'
+    | '/guides/n-400-naturalization-times'
+    | '/guides/uscis-processing-times-explained'
+    | '/guides/what-to-do-if-case-delayed'
+    | '/guides/'
     | '/api/cron/sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/forms'
-    | '/robots.txt'
-    | '/sitemap.xml'
+    | '/methodology'
+    | '/privacy'
+    | '/terms'
     | '/api/feedback'
     | '/api/track'
     | '/case/$slug'
     | '/form/$code'
+    | '/guides/case-status-vs-processing-times'
+    | '/guides/eb-2-vs-eb-3'
+    | '/guides/filing-checklist'
+    | '/guides/h-1b-processing-times'
+    | '/guides/i-130-family-petition-times'
+    | '/guides/i-485-processing-times'
+    | '/guides/n-400-naturalization-times'
+    | '/guides/uscis-processing-times-explained'
+    | '/guides/what-to-do-if-case-delayed'
+    | '/guides'
     | '/api/cron/sync'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/forms'
-    | '/robots.txt'
-    | '/sitemap.xml'
+    | '/methodology'
+    | '/privacy'
+    | '/terms'
     | '/api/feedback'
     | '/api/track'
     | '/case/$slug'
     | '/form/$code'
+    | '/guides/case-status-vs-processing-times'
+    | '/guides/eb-2-vs-eb-3'
+    | '/guides/filing-checklist'
+    | '/guides/h-1b-processing-times'
+    | '/guides/i-130-family-petition-times'
+    | '/guides/i-485-processing-times'
+    | '/guides/n-400-naturalization-times'
+    | '/guides/uscis-processing-times-explained'
+    | '/guides/what-to-do-if-case-delayed'
+    | '/guides/'
     | '/api/cron/sync'
   fileRoutesById: FileRoutesById
 }
@@ -151,29 +290,47 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   FormsRoute: typeof FormsRoute
-  RobotsDottxtRoute: typeof RobotsDottxtRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  MethodologyRoute: typeof MethodologyRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiFeedbackRoute: typeof ApiFeedbackRoute
   ApiTrackRoute: typeof ApiTrackRoute
   CaseSlugRoute: typeof CaseSlugRoute
   FormCodeRoute: typeof FormCodeRoute
+  GuidesCaseStatusVsProcessingTimesRoute: typeof GuidesCaseStatusVsProcessingTimesRoute
+  GuidesEb2VsEb3Route: typeof GuidesEb2VsEb3Route
+  GuidesFilingChecklistRoute: typeof GuidesFilingChecklistRoute
+  GuidesH1bProcessingTimesRoute: typeof GuidesH1bProcessingTimesRoute
+  GuidesI130FamilyPetitionTimesRoute: typeof GuidesI130FamilyPetitionTimesRoute
+  GuidesI485ProcessingTimesRoute: typeof GuidesI485ProcessingTimesRoute
+  GuidesN400NaturalizationTimesRoute: typeof GuidesN400NaturalizationTimesRoute
+  GuidesUscisProcessingTimesExplainedRoute: typeof GuidesUscisProcessingTimesExplainedRoute
+  GuidesWhatToDoIfCaseDelayedRoute: typeof GuidesWhatToDoIfCaseDelayedRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
   ApiCronSyncRoute: typeof ApiCronSyncRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsDottxtRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/methodology': {
+      id: '/methodology'
+      path: '/methodology'
+      fullPath: '/methodology'
+      preLoaderRoute: typeof MethodologyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forms': {
@@ -195,6 +352,76 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/what-to-do-if-case-delayed': {
+      id: '/guides/what-to-do-if-case-delayed'
+      path: '/guides/what-to-do-if-case-delayed'
+      fullPath: '/guides/what-to-do-if-case-delayed'
+      preLoaderRoute: typeof GuidesWhatToDoIfCaseDelayedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/uscis-processing-times-explained': {
+      id: '/guides/uscis-processing-times-explained'
+      path: '/guides/uscis-processing-times-explained'
+      fullPath: '/guides/uscis-processing-times-explained'
+      preLoaderRoute: typeof GuidesUscisProcessingTimesExplainedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/n-400-naturalization-times': {
+      id: '/guides/n-400-naturalization-times'
+      path: '/guides/n-400-naturalization-times'
+      fullPath: '/guides/n-400-naturalization-times'
+      preLoaderRoute: typeof GuidesN400NaturalizationTimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/i-485-processing-times': {
+      id: '/guides/i-485-processing-times'
+      path: '/guides/i-485-processing-times'
+      fullPath: '/guides/i-485-processing-times'
+      preLoaderRoute: typeof GuidesI485ProcessingTimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/i-130-family-petition-times': {
+      id: '/guides/i-130-family-petition-times'
+      path: '/guides/i-130-family-petition-times'
+      fullPath: '/guides/i-130-family-petition-times'
+      preLoaderRoute: typeof GuidesI130FamilyPetitionTimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/h-1b-processing-times': {
+      id: '/guides/h-1b-processing-times'
+      path: '/guides/h-1b-processing-times'
+      fullPath: '/guides/h-1b-processing-times'
+      preLoaderRoute: typeof GuidesH1bProcessingTimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/filing-checklist': {
+      id: '/guides/filing-checklist'
+      path: '/guides/filing-checklist'
+      fullPath: '/guides/filing-checklist'
+      preLoaderRoute: typeof GuidesFilingChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/eb-2-vs-eb-3': {
+      id: '/guides/eb-2-vs-eb-3'
+      path: '/guides/eb-2-vs-eb-3'
+      fullPath: '/guides/eb-2-vs-eb-3'
+      preLoaderRoute: typeof GuidesEb2VsEb3RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/case-status-vs-processing-times': {
+      id: '/guides/case-status-vs-processing-times'
+      path: '/guides/case-status-vs-processing-times'
+      fullPath: '/guides/case-status-vs-processing-times'
+      preLoaderRoute: typeof GuidesCaseStatusVsProcessingTimesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/form/$code': {
@@ -239,12 +466,25 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   FormsRoute: FormsRoute,
-  RobotsDottxtRoute: RobotsDottxtRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  MethodologyRoute: MethodologyRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiFeedbackRoute: ApiFeedbackRoute,
   ApiTrackRoute: ApiTrackRoute,
   CaseSlugRoute: CaseSlugRoute,
   FormCodeRoute: FormCodeRoute,
+  GuidesCaseStatusVsProcessingTimesRoute:
+    GuidesCaseStatusVsProcessingTimesRoute,
+  GuidesEb2VsEb3Route: GuidesEb2VsEb3Route,
+  GuidesFilingChecklistRoute: GuidesFilingChecklistRoute,
+  GuidesH1bProcessingTimesRoute: GuidesH1bProcessingTimesRoute,
+  GuidesI130FamilyPetitionTimesRoute: GuidesI130FamilyPetitionTimesRoute,
+  GuidesI485ProcessingTimesRoute: GuidesI485ProcessingTimesRoute,
+  GuidesN400NaturalizationTimesRoute: GuidesN400NaturalizationTimesRoute,
+  GuidesUscisProcessingTimesExplainedRoute:
+    GuidesUscisProcessingTimesExplainedRoute,
+  GuidesWhatToDoIfCaseDelayedRoute: GuidesWhatToDoIfCaseDelayedRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
   ApiCronSyncRoute: ApiCronSyncRoute,
 }
 export const routeTree = rootRouteImport

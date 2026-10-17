@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/methodology")({
   head: () => ({
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/methodology")({
         content:
           "Transparent documentation of how Visa Case Times collects USCIS processing-time data, aggregates it, and presents it. Sources, cadence, limitations, and revision history.",
       },
-      { rel: "canonical", href: "https://visacasetimes.com/methodology" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/methodology") }],
   }),
   component: MethodologyPage,
 });

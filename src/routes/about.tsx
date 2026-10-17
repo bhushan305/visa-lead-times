@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/about")({
         content:
           "Visa Case Times is an independent tracker for USCIS processing times. Daily snapshots, weekly averages, fiscal-year history — all from USCIS's official data, transparently sourced.",
       },
-      { rel: "canonical", href: "https://visacasetimes.com/about" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/about") }],
   }),
   component: AboutPage,
 });
@@ -132,7 +133,7 @@ function AboutPage() {
               note and respond to most within a few days.
             </p>
             <p className="text-base text-foreground leading-relaxed mb-4">
-              For press or partnership inquiries: <strong>hello@visacasetimes.com</strong>.
+              For press or partnership inquiries, use the same Feedback widget and mention it in your note.
             </p>
 
             <p className="text-xs text-muted-foreground mt-10 pt-6 border-t rule">

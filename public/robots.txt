@@ -2,5 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://visacasetimes.com/sitemap.xml
-Sitemap: https://usciscasetimes.com/sitemap.xml
+Sitemap: https://www.visacasetimes.com/sitemap.xml

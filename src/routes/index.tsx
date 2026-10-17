@@ -7,6 +7,7 @@ import { getAllForms, getAllCases } from "@/lib/case.functions";
 import { searchWithAlias, type CaseSummary, type FormGroup } from "@/lib/processing-times";
 import { trackSearch } from "@/lib/analytics-tracker";
 import { readLastCase } from "@/lib/preferences";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -41,8 +42,8 @@ export const Route = createFileRoute("/")({
           "Daily-updated wait times for every USCIS form and service center. Your case type in seconds.",
       },
       { name: "twitter:card", content: "summary_large_image" },
-      { rel: "canonical", href: "/" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/") }],
   }),
   component: HomePage,
 });

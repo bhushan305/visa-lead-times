@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/guides/")({
   head: () => ({
@@ -10,8 +11,8 @@ export const Route = createFileRoute("/guides/")({
         content:
           "In-depth guides on USCIS processing times, what to do if your case is delayed, EB-2 vs EB-3, filing checklists, and the most common form types (H-1B, I-485, N-400, I-130).",
       },
-      { rel: "canonical", href: "https://visacasetimes.com/guides" } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/guides") }],
   }),
   component: GuidesIndex,
 });

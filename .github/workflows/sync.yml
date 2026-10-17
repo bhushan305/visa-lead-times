@@ -43,3 +43,26 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
+
+      - name: Fail if the USCIS scrape has gone stale
+        # The scrape itself runs in Chrome on Bhushan's Mac (Claude scheduled
+        # task "USCIS daily scrape", scripts/uscis-scrape.browser.js) because
+        # USCIS blocks datacenter IPs. If it stops, the sync above still passes
+        # with old data, which is how the site silently went stale from
+        # 2026-09-21 to 2026-10-17. Failing here makes GitHub email an alert.
+        run: |
+          URL="${APPS_SCRIPT_URL:-https://script.google.com/macros/s/AKfycbwF37kFPBEYOCS9t33Ai5gzoL_XkYBFfMsKzCt9SameFmPf30wOQkqbbqn53njCdrAZ/exec}"
+          curl -fsSL "$URL?tab=run_log" -o run_log.json
+          node -e '
+            const rows = JSON.parse(require("fs").readFileSync("run_log.json", "utf8")).rows || [];
+            const last = rows.map(r => Date.parse(r.run_timestamp_pt)).filter(Number.isFinite).sort((a, b) => b - a)[0];
+            if (!last) { console.error("Run_Log is empty"); process.exit(1); }
+            const hours = (Date.now() - last) / 36e5;
+            console.log(`Last USCIS scrape: ${new Date(last).toISOString()} (${hours.toFixed(1)}h ago)`);
+            if (hours > 50) {
+              console.error("::error::USCIS scrape is stale (>50h). Check the \"USCIS daily scrape\" scheduled task and that Chrome is running on the Mac.");
+              process.exit(1);
+            }
+          '
+        env:
+          APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}

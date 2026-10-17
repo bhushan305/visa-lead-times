@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { canonicalUrl } from "@/lib/site";
 
 export const Route = createFileRoute("/guides/what-to-do-if-case-delayed")({
   head: () => ({
@@ -23,11 +24,8 @@ export const Route = createFileRoute("/guides/what-to-do-if-case-delayed")({
       },
       { property: "og:type", content: "article" },
       { property: "article:published_time", content: "2026-06-19" },
-      {
-        rel: "canonical",
-        href: "https://visacasetimes.com/guides/what-to-do-if-case-delayed",
-      } as any,
     ],
+    links: [{ rel: "canonical", href: canonicalUrl("/guides/what-to-do-if-case-delayed") }],
   }),
   component: GuidePage,
 });
